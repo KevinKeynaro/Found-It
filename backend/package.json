@@ -11,6 +11,9 @@
     "start": "node src/server.js",
     "migrate": "node db/migrate.js",
     "migrate:status": "node db/migrate.js status",
+    "admin:create": "node scripts/admin.js create",
+    "admin:reset": "node scripts/admin.js reset",
+    "seed:dev": "node scripts/seed-dev.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
