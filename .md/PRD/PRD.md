@@ -1,6 +1,6 @@
 # Found It! — Product Requirements Document
 
-> Status: **Draft v0.3** — planning stage. This document is the source of truth for scope and decisions. If code or other docs disagree with it, update one of them deliberately.
+> Status: **Draft v0.3.1** — planning stage. This document is the source of truth for scope and decisions. If code or other docs disagree with it, update one of them deliberately.
 
 ## 1. Overview
 
@@ -222,7 +222,7 @@ Full definitions live in the database schema document and migrations.
 
 **users**
 
-`id, name, email (unique), password (nullable for future SSO), role (admin|teacher|student), class (nullable), must_change_password (default true), is_active (default true), created_at, updated_at`
+`id, name, email (unique), password (nullable for future SSO), role (admin|teacher|student), class_name (nullable), must_change_password (default true), is_active (default true), token_version (default 0), created_at, updated_at`
 
 **items**
 
@@ -237,7 +237,7 @@ Full definitions live in the database schema document and migrations.
 - `returned_by`, `returned_to`, and `returned_at` remain empty until the item is returned. Reopening an item (`returned` -> `found`) clears `returned_by`, `returned_to`, and `returned_at` back to null.
 - `deleted_at` and `deleted_by` record soft deletion. Queries and the search index must always exclude rows where `deleted_at` is not null. Soft delete retains the record for audit, including `posted_by` and `returned_by`.
 - `image_public_id` is stored so the Cloudinary image can be removed when a photo is replaced or when an item is permanently purged. The Cloudinary image is kept on soft delete.
-- Search should support title and description, using suitable database indexes, and must always exclude soft-deleted items.
+- Search uses parameterized LIKE queries on title and description rather than a full-text index, and must always exclude soft-deleted items.
 - Overdue status is derived from `date_found`, `overdue_days`, and the item's return status.
 - Returned-item deletion eligibility and teacher reopen eligibility are derived from `returned_at` and `returned_retention_days`.
 - Database changes must be tracked as numbered SQL migration files. The live database must not be modified manually without corresponding migration changes.
@@ -331,3 +331,4 @@ Before implementation, the database schema and API specification must define the
 - **Authentication security:** Added minimum 8-character password length, login rate limiting, 8-hour JWT lifetime, HttpOnly/Secure/SameSite cookie storage (no localStorage), CSRF protection for state-changing requests, same-site/proxied API hosting constraint (under hosting decisions and CORS requirements note), and immediate rejection of deactivated accounts on every request.
 - **Soft delete:** Added `deleted_at` and `deleted_by` to `items` data model. All deletions are soft deletes; queries and search index must exclude rows with non-null `deleted_at`. Images kept on soft delete. Added permanent purge and restore to out-of-v1 list. Updated Reliability, Auditability, and Cloudinary cleanup rules.
 - **Wording fixes:** Replaced "configured retention threshold" with "configured overdue threshold" for overdue items in Goals. Specified configurable application timezone with documented default of `Asia/Jakarta` under time consistency.
+- **Schema sync (v0.3.1):** Aligned data model with SQL schema: renamed `class` to `class_name`, added `token_version` to `users`, and specified search using parameterized `LIKE` rather than a full-text index.
