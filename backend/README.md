@@ -40,7 +40,7 @@ REST API for **Found It**, the school's lost and found website. Teachers post it
 ## Tech Stack
 
 - Node.js and Express.js
-- MySQL with Prisma ORM
+- MySQL with `mysql2` (raw SQL queries and connection pool)
 - JSON Web Token (`jsonwebtoken`) and `bcrypt`
 - Zod for validation
 - Multer and Cloudinary for image upload
@@ -65,30 +65,48 @@ npm install
 
 ### Environment Variables
 
-Create a `.env` file in the backend root:
+Copy `.env.example` to `.env` in the backend root:
+
+```bash
+cp .env.example .env
+```
+
+Configure your local environment variables in `.env`:
 
 ```env
 PORT=5000
-DATABASE_URL="mysql://USER:PASSWORD@localhost:3306/found_it"
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_DATABASE=found_it
 
 JWT_SECRET=your_secret_key
-JWT_EXPIRES_IN=1d
+JWT_EXPIRES_IN=8h
 
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
 CLIENT_URL=http://localhost:3000
+APP_TIMEZONE=Asia/Jakarta
+OVERDUE_DAYS=30
+RETURNED_RETENTION_DAYS=5
 ```
 
 ### Database Setup
 
+Run SQL migrations using `mysql2`:
+
 ```bash
-npx prisma migrate dev
-npx prisma db seed
+npm run migrate
 ```
 
-The seed creates a default admin account. Change its password after the first login.
+To view applied and pending migrations:
+
+```bash
+npm run migrate:status
+```
 
 ### Run
 
@@ -103,18 +121,19 @@ The API runs at `http://localhost:5000`.
 
 ```
 backend/
-├── prisma/
-│   ├── schema.prisma
-│   └── seed.js
+├── db/
+│   ├── migrations/      # SQL migrations
+│   └── migrate.js       # migration runner
 ├── src/
 │   ├── config/          # database and Cloudinary setup
 │   ├── controllers/     # request handlers
 │   ├── middlewares/     # authenticate, authorize, validate, upload, error handler
 │   ├── routes/          # route definitions
 │   ├── schemas/         # Zod schemas
-│   ├── utils/           # helpers
-│   └── index.js
+│   ├── app.js           # express app configuration
+│   └── server.js        # server entry point
 ├── .env
+├── .env.example
 └── package.json
 ```
 
