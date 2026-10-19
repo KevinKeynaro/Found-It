@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import pool from './config/db.js';
 import AppError from './utils/AppError.js';
 import csrfGuard from './middlewares/csrfGuard.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 
@@ -32,6 +33,8 @@ app.get('/api/health', async (req, res) => {
     });
   }
 });
+
+app.use('/api/auth', authRoutes);
 
 // 404 JSON handler
 app.use((req, res, next) => {
