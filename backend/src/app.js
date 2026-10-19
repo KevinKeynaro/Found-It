@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import pool from './config/db.js';
 import AppError from './utils/AppError.js';
+import csrfGuard from './middlewares/csrfGuard.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(csrfGuard);
 
 app.get('/api/health', async (req, res) => {
   try {
