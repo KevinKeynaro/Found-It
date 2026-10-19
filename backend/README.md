@@ -124,12 +124,16 @@ backend/
 ├── db/
 │   ├── migrations/      # SQL migrations
 │   └── migrate.js       # migration runner
+├── scripts/
+│   ├── admin.js         # admin account CLI (create, reset)
+│   └── seed-dev.js      # dev accounts seed script
 ├── src/
-│   ├── config/          # database and Cloudinary setup
+│   ├── config/          # database, auth, and Cloudinary setup
 │   ├── controllers/     # request handlers
-│   ├── middlewares/     # authenticate, authorize, validate, upload, error handler
+│   ├── middlewares/     # auth, csrf, validate, rateLimiters, error handlers
 │   ├── routes/          # route definitions
 │   ├── schemas/         # Zod schemas
+│   ├── utils/           # helpers (AppError)
 │   ├── app.js           # express app configuration
 │   └── server.js        # server entry point
 ├── .env
@@ -137,24 +141,159 @@ backend/
 └── package.json
 ```
 
-## Authentication
+## Admin & Dev CLI Scripts
 
-Send the token in the `Authorization` header on every protected route:
+Manage administrative and test accounts directly via CLI:
 
+```bash
+# Create an admin account (password generated securely, printed ONCE)
+npm run admin:create -- --name="Admin Name" --email="admin@found-it.test"
+
+# Reset an admin/user password (invalidates all active sessions)
+npm run admin:reset -- --email="admin@found-it.test"
+
+# Seed development teacher and student accounts (disabled in production)
+npm run seed:dev
 ```
-Authorization: Bearer <token>
-```
 
-Request flow: **route → authenticate → authorize → validate → controller**
+*Note: Never pass passwords via command-line arguments.*
+
+## Authentication & Security
+
+### Cookie-Based Sessions
+Authentication uses JSON Web Tokens (HS256) stored in an `HttpOnly` cookie (`found_it_token`):
+- `httpOnly: true` (inaccessible to browser JavaScript)
+- `secure: true` in production (HTTPS only)
+- `sameSite: 'lax'`
+- `path: '/'`
+- Max-Age equal to `JWT_EXPIRES_IN` (default 8 hours)
+
+The browser automatically attaches this cookie on subsequent requests. No manual `Authorization: Bearer` header is required.
+
+### CSRF Protection
+For all state-changing requests (`POST`, `PUT`, `PATCH`, `DELETE`):
+- The `X-Requested-With: XMLHttpRequest` header is **mandatory**.
+- If an `Origin` header is present, it must strictly match `CLIENT_URL`.
+- Requests failing validation receive `403 CSRF_REJECTED`.
+
+**Setting in Postman / Thunder Client:**
+1. Open the **Headers** tab.
+2. Add key: `X-Requested-With`, value: `XMLHttpRequest`.
+
+### Rate Limiting
+- **Account Login Limiter:** Maximum 5 failed attempts per 15-minute window for a specific `email + IP` combination. Successful logins do not count against this quota.
+- **IP Login Limiter:** Maximum 100 requests per 15-minute window per IP to accommodate shared school networks.
+- Exceeding limits returns `429 TOO_MANY_ATTEMPTS`.
+
+### Password Change Enforcement
+When `must_change_password` is `true`, users are barred with `403 PASSWORD_CHANGE_REQUIRED` from all protected resources except:
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
+- `POST /api/auth/change-password`
+
+---
 
 ## API Endpoints
 
 ### Auth
 
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| POST | `/api/auth/login` | Public | Log in and receive a JWT |
-| GET | `/api/auth/me` | Logged in | Get the current user |
+#### 1. POST `/api/auth/login`
+Authenticates a user and issues an `HttpOnly` session cookie.
+
+- **Access:** Public
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Request Body:**
+  ```json
+  {
+    "email": "teacher@found-it.test",
+    "password": "DevPassword123!"
+  }
+  ```
+- **Success Response (200 OK):**
+  - Sets `found_it_token` cookie.
+  - Body:
+    ```json
+    {
+      "user": {
+        "id": 1,
+        "name": "Dev Teacher",
+        "email": "teacher@found-it.test",
+        "role": "teacher",
+        "class_name": null,
+        "must_change_password": false
+      }
+    }
+    ```
+- **Error Codes:**
+  - `400 VALIDATION_ERROR`: Missing/malformed email or empty/oversized password.
+  - `401 INVALID_CREDENTIALS`: Incorrect email or password (timing attack protected).
+  - `403 ACCOUNT_DISABLED`: User account is deactivated (`is_active = 0`).
+  - `403 CSRF_REJECTED`: Missing `X-Requested-With` or mismatched `Origin`.
+  - `429 TOO_MANY_ATTEMPTS`: Rate limit exceeded.
+
+#### 2. POST `/api/auth/logout`
+Terminates the session and clears the auth cookie.
+
+- **Access:** Public / Logged in
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Success Response (204 No Content):** Empty body; clears `found_it_token` cookie.
+- **Error Codes:**
+  - `403 CSRF_REJECTED`: Missing `X-Requested-With`.
+
+#### 3. GET `/api/auth/me`
+Returns the currently authenticated user profile from the database.
+
+- **Access:** Logged in (valid session cookie)
+- **Success Response (200 OK):**
+  ```json
+  {
+    "user": {
+      "id": 1,
+      "name": "Dev Teacher",
+      "email": "teacher@found-it.test",
+      "role": "teacher",
+      "class_name": null,
+      "must_change_password": false
+    }
+  }
+  ```
+- **Error Codes:**
+  - `401 UNAUTHENTICATED`: Missing, expired, or invalid cookie, or revoked session.
+  - `403 ACCOUNT_DISABLED`: User account is deactivated.
+
+#### 4. POST `/api/auth/change-password`
+Changes the user's password, clears `must_change_password`, increments `token_version` (revoking other active sessions), and issues a fresh session cookie.
+
+- **Access:** Logged in (permitted during `must_change_password = true`)
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Request Body:**
+  ```json
+  {
+    "current_password": "DevPassword123!",
+    "new_password": "NewSecurePassword456!"
+  }
+  ```
+- **Success Response (200 OK):**
+  - Sets updated `found_it_token` cookie.
+  - Body:
+    ```json
+    {
+      "user": {
+        "id": 1,
+        "name": "Dev Teacher",
+        "email": "teacher@found-it.test",
+        "role": "teacher",
+        "class_name": null,
+        "must_change_password": false
+      }
+    }
+    ```
+- **Error Codes:**
+  - `400 VALIDATION_ERROR`: New password < 8 characters, > 72 bytes, or identical to current.
+  - `401 UNAUTHENTICATED`: Missing or invalid session.
+  - `401 INVALID_CREDENTIALS`: Current password does not match.
+  - `403 ACCOUNT_DISABLED`: User account is deactivated.
+  - `403 CSRF_REJECTED`: Missing `X-Requested-With` header.
 
 ### Users
 
