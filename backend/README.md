@@ -92,6 +92,8 @@ CLIENT_URL=http://localhost:3000
 APP_TIMEZONE=Asia/Jakarta
 OVERDUE_DAYS=30
 RETURNED_RETENTION_DAYS=5
+SELF_DELETE_HOURS=24
+MAX_UPLOAD_MB=5
 ```
 
 ### Database Setup
@@ -307,16 +309,166 @@ Changes the user's password, clears `must_change_password`, increments `token_ve
 
 ### Items
 
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/items` | Logged in | List items. Supports `?search=` and `?status=` |
-| GET | `/api/items/:id` | Logged in | Get one item |
-| POST | `/api/items` | Admin, Teacher | Create an item (`multipart/form-data` with `image`) |
-| PUT | `/api/items/:id` | Admin, owner Teacher | Update an item |
-| DELETE | `/api/items/:id` | Admin, owner Teacher | Delete an item |
-| PATCH | `/api/items/:id/return` | Admin, owner Teacher | Mark an item as returned |
+All item endpoints require authentication and password change completion (`must_change_password = 0`).
 
-**Item fields:** `title`, `description`, `locationFound`, `dateFound`, `image`
+#### Role & Permission Matrix for Items
+
+| Action | Admin | Teacher | Student |
+|---|:---:|:---:|:---:|
+| Browse active found items (`view=active`) | ✅ | ✅ | ✅ |
+| Browse overdue items (`view=overdue`) | ✅ | ✅ | ❌ (403) |
+| Browse archive (`view=archive`) | ✅ | ✅ | ❌ (403) |
+| View item details (`GET /:id`) | ✅ (all) | ✅ (all) | ✅ (active found only) |
+| Post a found item (`POST /`) | ✅ | ✅ | ❌ (403) |
+| Edit an item (`PATCH /:id`) | ✅ (`found` only) | ✅ (`found` only) | ❌ (403) |
+| Mark item as returned (`POST /:id/return`) | ✅ (`found` only) | ✅ (`found` only) | ❌ (403) |
+| Reopen item (`POST /:id/reopen`) | ✅ (always) | ✅ (within retention) | ❌ (403) |
+| Soft-delete item (`DELETE /:id`) | ✅ (always) | Rule-gated* | ❌ (403) |
+
+*\*Teacher delete conditions: allowed only if (a) item is overdue, (b) item is returned past retention days, or (c) teacher is original poster, item is `found`, and within 24 hours of creation.*
+
+---
+
+#### 1. GET `/api/items`
+Lists non-deleted items with pagination and search.
+
+- **Access:** Authenticated (Students restricted to `view=active`).
+- **Query Parameters:**
+  - `view`: `active` (default), `overdue` (Teacher/Admin only), `archive` (Teacher/Admin only).
+  - `q`: Search query string (up to 5 words; matches `title` or `description` using escaped `LIKE`).
+  - `page`: Page number (default `1`).
+  - `limit`: Items per page (default `12`, max `50`).
+- **Success Response (200 OK):**
+  ```json
+  {
+    "items": [
+      {
+        "id": 1,
+        "title": "Blue Hydro Flask",
+        "description": "Found near basketball court",
+        "location_found": "Sports Hall",
+        "date_found": "2026-10-18",
+        "image_url": "https://res.cloudinary.com/.../image.jpg",
+        "thumbnail_url": "https://res.cloudinary.com/.../c_fill,f_auto,h_300,q_auto,w_400/.../image.jpg",
+        "status": "found",
+        "is_overdue": false,
+        "posted_by": {
+          "id": 2,
+          "name": "Dev Teacher"
+        },
+        "returned_at": null,
+        "returned_by": null,
+        "returned_to": null,
+        "created_at": "2026-10-18T08:30:00.000Z",
+        "permissions": {
+          "can_edit": true,
+          "can_return": true,
+          "can_reopen": false,
+          "can_delete": true
+        }
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 12,
+      "total": 1,
+      "total_pages": 1
+    }
+  }
+  ```
+- **Error Codes:**
+  - `401 UNAUTHENTICATED`: Missing or invalid session.
+  - `403 FORBIDDEN`: Student requested `view=overdue` or `view=archive`.
+
+---
+
+#### 2. GET `/api/items/:id`
+Retrieves detailed information for a single item.
+
+- **Access:** Authenticated.
+- **Success Response (200 OK):** Single item object matching list item schema.
+- **Error Codes:**
+  - `404 ITEM_NOT_FOUND`: Item does not exist, was soft-deleted, or student attempted to view overdue/returned item.
+
+---
+
+#### 3. POST `/api/items`
+Creates a new found item listing with a photo upload.
+
+- **Access:** Teacher, Admin.
+- **Content-Type:** `multipart/form-data`
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Form Fields:**
+  - `title`: String (1–150 chars).
+  - `description`: String (optional, max 2000 chars).
+  - `location_found`: String (1–150 chars).
+  - `date_found`: `YYYY-MM-DD` (cannot be in the future in `APP_TIMEZONE`).
+  - `photo`: File (required, image/jpeg, image/png, image/webp; max `MAX_UPLOAD_MB`).
+- **Success Response (201 Created):** `{ "item": { ... } }`
+- **Error Codes:**
+  - `400 VALIDATION_ERROR`: Missing field or invalid date.
+  - `400 INVALID_FILE`: Unsupported format or corrupted magic bytes.
+  - `413 FILE_TOO_LARGE`: Image exceeds configured upload limit.
+  - `403 FORBIDDEN`: Non-teacher/admin role.
+  - `403 CSRF_REJECTED`: Missing `X-Requested-With`.
+
+---
+
+#### 4. PATCH `/api/items/:id`
+Updates fields of an existing found item.
+
+- **Access:** Teacher, Admin.
+- **Content-Type:** `multipart/form-data`
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Form Fields:** `title`, `description`, `location_found`, `date_found`, `photo` (all optional; at least one field or new photo required).
+- **Success Response (200 OK):** `{ "item": { ... } }`
+- **Error Codes:**
+  - `404 ITEM_NOT_FOUND`: Item does not exist or soft-deleted.
+  - `409 INVALID_STATE`: Item is already returned (must reopen before editing).
+  - `403 FORBIDDEN`: Insufficient permission.
+
+---
+
+#### 5. POST `/api/items/:id/return`
+Marks an active found item as returned to its owner.
+
+- **Access:** Teacher, Admin.
+- **Headers:** `X-Requested-With: XMLHttpRequest`, `Content-Type: application/json`
+- **Request Body:**
+  ```json
+  {
+    "returned_to": "Jane Doe"
+  }
+  ```
+- **Success Response (200 OK):** `{ "item": { ... } }`
+- **Error Codes:**
+  - `404 ITEM_NOT_FOUND`: Item does not exist or soft-deleted.
+  - `409 INVALID_STATE`: Item is not in `found` status.
+
+---
+
+#### 6. POST `/api/items/:id/reopen`
+Transitions a returned item back to `found` status.
+
+- **Access:** Teacher, Admin.
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Success Response (200 OK):** `{ "item": { ... } }` (clears `returned_at`, `returned_by`, `returned_to`).
+- **Error Codes:**
+  - `403 RETENTION_WINDOW_EXPIRED`: Teacher attempted to reopen after retention window elapsed.
+  - `404 ITEM_NOT_FOUND`: Item does not exist or soft-deleted.
+  - `409 INVALID_STATE`: Item is not in `returned` status.
+
+---
+
+#### 7. DELETE `/api/items/:id`
+Soft-deletes an item (retains record and Cloudinary image for audit).
+
+- **Access:** Authenticated (gated by `canDelete`).
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Success Response (204 No Content):** Empty body.
+- **Error Codes:**
+  - `403 DELETE_NOT_ALLOWED`: Deletion not permitted under lifecycle rules.
+  - `404 ITEM_NOT_FOUND`: Item does not exist or already deleted.
 
 ### Claims
 
