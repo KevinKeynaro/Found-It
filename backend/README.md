@@ -94,6 +94,11 @@ OVERDUE_DAYS=30
 RETURNED_RETENTION_DAYS=5
 SELF_DELETE_HOURS=24
 MAX_UPLOAD_MB=5
+
+# User management & CSV import
+IMPORT_MAX_ROWS=500
+IMPORT_MAX_MB=1
+IMPORT_BCRYPT_ROUNDS=10
 ```
 
 ### Database Setup
@@ -153,6 +158,12 @@ npm run admin:create -- --name="Admin Name" --email="admin@found-it.test"
 
 # Reset an admin/user password (invalidates all active sessions)
 npm run admin:reset -- --email="admin@found-it.test"
+
+# Deactivate an admin account (refuses if last active admin; invalidates sessions)
+npm run admin:deactivate -- --email="admin@found-it.test"
+
+# Activate an admin account
+npm run admin:activate -- --email="admin@found-it.test"
 
 # Seed development teacher and student accounts (disabled in production)
 npm run seed:dev
@@ -299,13 +310,263 @@ Changes the user's password, clears `must_change_password`, increments `token_ve
 
 ### Users
 
-| Method | Endpoint | Access | Description |
-|---|---|---|---|
-| GET | `/api/users` | Admin | List users |
-| POST | `/api/users` | Admin | Create a teacher or student account |
-| GET | `/api/users/:id` | Admin | Get one user |
-| PUT | `/api/users/:id` | Admin | Update a user |
-| DELETE | `/api/users/:id` | Admin | Delete a user |
+All user management endpoints require authentication, password change completion (`must_change_password = 0`), and the **Admin** role (`requireRole('admin')`). Non-admins receive `403 FORBIDDEN`.
+
+> **Administrative Protection Rule:**
+> Admin accounts cannot be updated, deactivated, activated, or password-reset through the API (`403 ADMIN_MANAGED_VIA_CLI`). Admins must be managed exclusively through server-side CLI scripts (`npm run admin:*`).
+
+#### User Shape
+User objects returned by API endpoints have the following structure (password hashes and token versions are never exposed):
+```json
+{
+  "id": 1,
+  "name": "Jane Teacher",
+  "email": "jane@school.test",
+  "role": "teacher",
+  "class_name": null,
+  "is_active": true,
+  "must_change_password": true,
+  "created_at": "2026-10-20T08:00:00.000Z"
+}
+```
+
+---
+
+#### 1. GET `/api/users`
+Lists users with search, role and active filters, and pagination.
+
+- **Access:** Admin
+- **Query Parameters:**
+  - `q`: Search string matching `name` or `email` (up to 100 chars, escaped LIKE).
+  - `role`: Filter by `admin`, `teacher`, or `student`.
+  - `is_active`: Filter by boolean status (`true`/`false` or `1`/`0`).
+  - `page`: Page number (default `1`).
+  - `limit`: Items per page (default `20`, max `100`).
+- **Success Response (200 OK):**
+  ```json
+  {
+    "users": [ ... ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "total_pages": 3
+    }
+  }
+  ```
+
+---
+
+#### 2. GET `/api/users/:id`
+Retrieves a single user by ID.
+
+- **Access:** Admin
+- **Success Response (200 OK):** `{ "user": { ... } }`
+- **Error Codes:**
+  - `404 USER_NOT_FOUND`: User does not exist.
+
+---
+
+#### 3. POST `/api/users`
+Creates a single `teacher` or `student` account. The role `admin` is disallowed via API.
+
+- **Access:** Admin
+- **Headers:** `X-Requested-With: XMLHttpRequest`, `Content-Type: application/json`
+- **Request Body:**
+  ```json
+  {
+    "name": "Jane Teacher",
+    "email": "jane@school.test",
+    "role": "teacher",
+    "class_name": null
+  }
+  ```
+- **Success Response (201 Created):**
+  ```json
+  {
+    "user": { ... },
+    "initial_password": "unambiguous_random_password"
+  }
+  ```
+  *(Note: The plaintext password is only returned in this response and must be securely provided to the user. `must_change_password` is set to `1`.)*
+- **Error Codes:**
+  - `400 VALIDATION_ERROR`: Missing/invalid fields or role is `admin`.
+  - `409 EMAIL_ALREADY_EXISTS`: An account with this email already exists.
+
+---
+
+#### 4. PATCH `/api/users/:id`
+Updates fields of an existing user (`name`, `email`, `role`, `class_name`).
+
+- **Access:** Admin
+- **Headers:** `X-Requested-With: XMLHttpRequest`, `Content-Type: application/json`
+- **Request Body:** At least one field required.
+  ```json
+  {
+    "name": "Jane Doe Updated",
+    "class_name": "11-B"
+  }
+  ```
+- **Success Response (200 OK):** `{ "user": { ... } }`
+- **Error Codes:**
+  - `403 ADMIN_MANAGED_VIA_CLI`: Target user is an admin.
+  - `404 USER_NOT_FOUND`: User does not exist.
+  - `409 EMAIL_ALREADY_EXISTS`: Updated email is already in use by another user.
+
+---
+
+#### 5. POST `/api/users/:id/deactivate`
+Deactivates a user account (`is_active = 0`) and increments `token_version` by 1, instantly revoking all active sessions. Idempotent.
+
+- **Access:** Admin
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Success Response (200 OK):** `{ "user": { ... } }`
+- **Error Codes:**
+  - `403 ADMIN_MANAGED_VIA_CLI`: Target is an admin.
+  - `404 USER_NOT_FOUND`: User does not exist.
+
+---
+
+#### 6. POST `/api/users/:id/activate`
+Re-activates a previously deactivated account (`is_active = 1`). Idempotent.
+
+- **Access:** Admin
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Success Response (200 OK):** `{ "user": { ... } }`
+- **Error Codes:**
+  - `403 ADMIN_MANAGED_VIA_CLI`: Target is an admin.
+  - `404 USER_NOT_FOUND`: User does not exist.
+
+---
+
+#### 7. POST `/api/users/:id/reset-password`
+Generates a new random temporary password, sets `must_change_password = 1`, and increments `token_version` to invalidate existing sessions.
+
+- **Access:** Admin
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Success Response (200 OK):**
+  ```json
+  {
+    "initial_password": "new_random_password"
+  }
+  ```
+- **Error Codes:**
+  - `403 ADMIN_MANAGED_VIA_CLI`: Target is an admin.
+  - `404 USER_NOT_FOUND`: User does not exist.
+
+---
+
+### CSV Import & Export
+
+#### CSV Format & Validation Rules
+- **Required Columns:** `name`, `email`, `role`
+- **Optional Column:** `class`
+- **Delimiters:** Auto-detects comma (`,`) or semicolon (`;`) from the header line.
+- **BOM Handling:** UTF-8 Byte Order Mark (`\uFEFF`) is automatically stripped if present.
+- **Header Normalization:** Headers are case-insensitive and trimmed (`Name`, `EMAIL`, `Role`, `Class`). Extra columns are ignored.
+- **Allowed Roles:** `teacher` and `student` (case-insensitive). The role `admin` is strictly rejected with `"admin accounts cannot be imported"`.
+- **Row Limits:** Max `IMPORT_MAX_ROWS` (default: 500) data rows. Zero data rows or files exceeding the limit are rejected with fatal errors.
+- **File Type Checks:** Rejects binary files (NUL bytes) and Excel `.xlsx` files (`PK` zip signature) with a message instructing the user to save as CSV. Size limit: `IMPORT_MAX_MB` (default: 1MB).
+- **Password Hashing Cost:** Passwords during bulk import use `IMPORT_BCRYPT_ROUNDS=10` (instead of 12) to ensure high responsiveness during bulk inserts while maintaining robust security, because all imported users are strictly forced to change their password on initial login (`must_change_password = 1`).
+
+#### Two-Step Import Flow
+1. **Preview Step (`POST /api/users/import/preview`):** Parses the CSV, validates every row with Zod, checks against existing emails in the database in a single query, and returns a categorized summary without writing anything to the database.
+2. **Execute Step (`POST /api/users/import`):** The client submits the same file to confirm. Invalid and duplicate rows are skipped and reported. Passwords for valid rows are generated and hashed with bounded concurrency (8 workers), then inserted in **one transaction** on a dedicated connection using chunked multi-row `INSERT` statements. On any failure or conflict, the transaction rolls back completely (`409 IMPORT_CONFLICT`).
+
+---
+
+#### 8. GET `/api/users/import/template`
+Downloads an empty CSV template with a UTF-8 BOM.
+
+- **Access:** Admin
+- **Response (200 OK):** `text/csv; charset=utf-8` with header `name,email,role,class\r\n`.
+
+---
+
+#### 9. POST `/api/users/import/preview`
+Stateless validation and duplicate detection preview for a CSV file.
+
+- **Access:** Admin
+- **Content-Type:** `multipart/form-data`
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Form Field:** `file` (CSV file, max `IMPORT_MAX_MB`).
+- **Success Response (200 OK):**
+  ```json
+  {
+    "summary": {
+      "total": 5,
+      "valid": 2,
+      "invalid": 1,
+      "duplicates": 2
+    },
+    "valid_rows": [
+      { "row": 2, "name": "Alice", "email": "alice@school.test", "role": "teacher", "class_name": null }
+    ],
+    "invalid_rows": [
+      { "row": 3, "errors": ["admin accounts cannot be imported"] }
+    ],
+    "duplicate_rows": [
+      { "row": 4, "email": "dupe@school.test", "reason": "duplicate_in_file" },
+      { "row": 5, "email": "exists@school.test", "reason": "exists_in_database" }
+    ]
+  }
+  ```
+
+---
+
+#### 10. POST `/api/users/import`
+Executes transactional bulk user creation from CSV.
+
+- **Access:** Admin (Rate-limited to 20 import requests per hour per admin).
+- **Content-Type:** `multipart/form-data`
+- **Headers:** `X-Requested-With: XMLHttpRequest`
+- **Form Field:** `file` (CSV file).
+- **Success Response (201 Created):**
+  ```json
+  {
+    "summary": {
+      "created": 2,
+      "skipped_invalid": 1,
+      "skipped_duplicates": 2
+    },
+    "created": [
+      {
+        "name": "Alice",
+        "email": "alice@school.test",
+        "role": "teacher",
+        "class_name": null,
+        "initial_password": "generated_password"
+      }
+    ],
+    "skipped": [
+      { "row": 3, "email": "bad@admin.test", "reason": "validation_error" },
+      { "row": 4, "email": "dupe@school.test", "reason": "duplicate_in_file" }
+    ]
+  }
+  ```
+- **Error Codes:**
+  - `400 INVALID_FILE`: Malformed CSV, missing required columns, zero rows, or file exceeding row/size limits.
+  - `409 IMPORT_CONFLICT`: Database race condition / duplicate entry detected during transaction; rolled back.
+  - `429 TOO_MANY_REQUESTS`: Exceeded 20 imports per hour limit.
+
+---
+
+#### 11. GET `/api/users/export`
+Exports users to a downloadable CSV file.
+
+- **Access:** Admin
+- **Query Parameters:**
+  - `q`: Search string matching `name` or `email`.
+  - `role`: Filter by `admin`, `teacher`, or `student`.
+  - `is_active`: Filter by boolean status.
+  - `delimiter`: `comma` (default) or `semicolon`.
+- **Security Features:**
+  - **No Password Data:** Passwords, password hashes, and token versions are omitted entirely.
+  - **Formula Injection Defense:** Cells starting with `=`, `+`, `-`, `@`, `\t`, or `\r` are neutralized with a leading single quote (`'`).
+  - **BOM Included:** Begins with a UTF-8 BOM (`\uFEFF`) for accurate rendering in spreadsheet software.
+- **Success Response (200 OK):**
+  - **Content-Type:** `text/csv; charset=utf-8`
+  - **Content-Disposition:** `attachment; filename="users-YYYY-MM-DD.csv"` (date in `APP_TIMEZONE`).
 
 ### Items
 
