@@ -6,6 +6,7 @@ import pool from './config/db.js';
 import AppError from './utils/AppError.js';
 import csrfGuard from './middlewares/csrfGuard.js';
 import authRoutes from './routes/auth.routes.js';
+import itemsRoutes from './routes/items.routes.js';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/items', itemsRoutes);
 
 // 404 JSON handler
 app.use((req, res, next) => {
@@ -78,6 +80,20 @@ app.use((err, req, res, next) => {
       errorBody.details = err.details;
     }
     return res.status(err.statusCode).json({ error: errorBody });
+  }
+
+  // MySQL check constraint violations (ER_CHECK_CONSTRAINT_VIOLATED = 3819)
+  if (
+    err.code === 'ER_CHECK_CONSTRAINT_VIOLATED' ||
+    err.errno === 3819 ||
+    (err.message && err.message.includes('Check constraint'))
+  ) {
+    return res.status(409).json({
+      error: {
+        code: 'CONSTRAINT_VIOLATION',
+        message: 'The requested operation violates database integrity constraints.',
+      },
+    });
   }
 
   // Unexpected internal errors
