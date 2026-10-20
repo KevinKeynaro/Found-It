@@ -35,3 +35,21 @@ export const loginIpLimiter = rateLimit({
     });
   },
 });
+
+export const importRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.user?.id ? `admin_import_${req.user.id}` : ipKeyGenerator(req);
+  },
+  handler: (req, res) => {
+    res.status(429).json({
+      error: {
+        code: 'TOO_MANY_REQUESTS',
+        message: 'Too many import requests. Maximum 20 imports per hour per admin.',
+      },
+    });
+  },
+});

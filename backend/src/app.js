@@ -7,6 +7,7 @@ import AppError from './utils/AppError.js';
 import csrfGuard from './middlewares/csrfGuard.js';
 import authRoutes from './routes/auth.routes.js';
 import itemsRoutes from './routes/items.routes.js';
+import usersRoutes from './routes/users.routes.js';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.get('/api/health', async (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/items', itemsRoutes);
+app.use('/api/users', usersRoutes);
 
 // 404 JSON handler
 app.use((req, res, next) => {
