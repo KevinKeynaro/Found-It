@@ -20,7 +20,12 @@ async function main() {
   let command = 'create';
   let restArgs = args;
 
-  if (args[0] === 'create' || args[0] === 'reset') {
+  if (
+    args[0] === 'create' ||
+    args[0] === 'reset' ||
+    args[0] === 'deactivate' ||
+    args[0] === 'activate'
+  ) {
     command = args[0];
     restArgs = args.slice(1);
   }
@@ -112,8 +117,82 @@ async function main() {
       console.log('token_version incremented (active sessions invalidated).');
       console.log('must_change_password flag is set to 1. User must change password upon next login.');
       console.log('------------------------------------------------------------');
+    } else if (command === 'deactivate') {
+      if (!values.email) {
+        console.error('Usage: npm run admin:deactivate -- --email="admin@example.com"');
+        process.exit(1);
+      }
+
+      const email = values.email.trim().toLowerCase();
+      const [existing] = await pool.query(
+        'SELECT id, name, role, is_active FROM users WHERE email = ?',
+        [email]
+      );
+
+      if (existing.length === 0) {
+        console.error(`Error: User with email "${email}" not found.`);
+        process.exit(1);
+      }
+
+      const target = existing[0];
+      if (target.role !== 'admin') {
+        console.error('Error: This command only operates on admin accounts.');
+        process.exit(1);
+      }
+
+      const [countResult] = await pool.query(
+        "SELECT COUNT(*) AS count FROM users WHERE role = 'admin' AND is_active = 1"
+      );
+      const activeAdmins = countResult[0].count;
+
+      if (target.is_active === 1 && activeAdmins <= 1) {
+        console.error('Error: Cannot deactivate the last remaining active admin account.');
+        process.exit(1);
+      }
+
+      if (target.is_active === 0) {
+        console.log(`Admin account "${email}" is already inactive.`);
+        return;
+      }
+
+      await pool.query(
+        'UPDATE users SET is_active = 0, token_version = token_version + 1 WHERE id = ?',
+        [target.id]
+      );
+
+      console.log(`Admin account "${email}" has been deactivated. Active sessions invalidated.`);
+    } else if (command === 'activate') {
+      if (!values.email) {
+        console.error('Usage: npm run admin:activate -- --email="admin@example.com"');
+        process.exit(1);
+      }
+
+      const email = values.email.trim().toLowerCase();
+      const [existing] = await pool.query(
+        'SELECT id, name, role, is_active FROM users WHERE email = ?',
+        [email]
+      );
+
+      if (existing.length === 0) {
+        console.error(`Error: User with email "${email}" not found.`);
+        process.exit(1);
+      }
+
+      const target = existing[0];
+      if (target.role !== 'admin') {
+        console.error('Error: This command only operates on admin accounts.');
+        process.exit(1);
+      }
+
+      if (target.is_active === 1) {
+        console.log(`Admin account "${email}" is already active.`);
+        return;
+      }
+
+      await pool.query('UPDATE users SET is_active = 1 WHERE id = ?', [target.id]);
+      console.log(`Admin account "${email}" has been activated.`);
     } else {
-      console.error(`Unknown command "${command}". Available commands: create, reset`);
+      console.error(`Unknown command "${command}". Available commands: create, reset, deactivate, activate`);
       process.exit(1);
     }
   } finally {

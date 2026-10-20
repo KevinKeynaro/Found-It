@@ -13,6 +13,8 @@
     "migrate:status": "node db/migrate.js status",
     "admin:create": "node scripts/admin.js create",
     "admin:reset": "node scripts/admin.js reset",
+    "admin:deactivate": "node scripts/admin.js deactivate",
+    "admin:activate": "node scripts/admin.js activate",
     "seed:dev": "node scripts/seed-dev.js",
     "test": "node --test"
   },
