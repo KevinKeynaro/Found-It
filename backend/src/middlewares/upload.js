@@ -1,5 +1,6 @@
 import multer from 'multer';
 import itemsConfig from '../config/items.js';
+import usersConfig from '../config/users.js';
 import AppError from '../utils/AppError.js';
 
 const storage = multer.memoryStorage();
@@ -75,6 +76,45 @@ export const uploadPhoto = (req, res, next) => {
       }
     }
 
+    next();
+  });
+};
+
+const allowedCsvMimeTypes = ['text/csv', 'application/vnd.ms-excel', 'text/plain'];
+
+const multerCsvUpload = multer({
+  storage,
+  limits: {
+    fileSize: usersConfig.importMaxBytes,
+  },
+  fileFilter: (req, file, cb) => {
+    const hasCsvExt = file.originalname && file.originalname.toLowerCase().endsWith('.csv');
+    if (!hasCsvExt || !allowedCsvMimeTypes.includes(file.mimetype)) {
+      return cb(
+        new AppError(400, 'INVALID_FILE', 'Only CSV (.csv) files are allowed.')
+      );
+    }
+    cb(null, true);
+  },
+}).single('file');
+
+export const uploadCsv = (req, res, next) => {
+  multerCsvUpload(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return next(
+            new AppError(
+              413,
+              'FILE_TOO_LARGE',
+              `File size exceeds maximum allowed limit of ${usersConfig.importMaxMb}MB.`
+            )
+          );
+        }
+        return next(new AppError(400, 'INVALID_FILE', err.message));
+      }
+      return next(err);
+    }
     next();
   });
 };
