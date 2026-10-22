@@ -50,8 +50,8 @@
 | **Users** menu | No | No | Yes |
 | Account menu (name, role, Change password, Sign out) | Yes | Yes | Yes |
 
-- **Phone:** a top bar with the logo and the account menu; main navigation is a bottom tab bar (Items, Post item for teachers and admins, Users for admins).
-- **Desktop (≥ 1024 px):** a horizontal top bar with all menus; content has a maximum width.
+- **Phone:** a top bar (h-16) with the logo and the account menu; main navigation is a bottom tab bar (Items, Post item for teachers and admins, Users for admins).
+- **Desktop (≥ 1024 px):** a taller horizontal top bar (h-20) with all menus; page container has a consistent maximum width of 80rem (`max-w-[80rem]`) with responsive horizontal padding (`px-4 md:px-6 lg:px-8`).
 - Navigation is data-driven per role. Pages that do not match the role are not shown. If opened by URL, show a "You don't have access to this page" screen.
 - Entries for pages that are not built yet are hidden until their milestone is done.
 
@@ -83,12 +83,13 @@
 - **Search bar** at the top (300 ms debounce after typing, updates `q` in the URL).
 - **Active / Overdue / Archive tabs** for teachers and admins only. Students see no tabs. Tabs show no counts (the API does not provide them).
 - **Item card:** photo (4:3), title, location found, date found. Teachers and admins also see a status badge (section 7).
-- **Card layout:** 2 columns on phones (compact cards), 3 columns from 768 px, 4 columns from 1024 px.
+- **Card layout:** 2 columns on phones (compact cards), 3 columns from 768 px through 1535 px (md, lg, xl), 4 columns only from 1536 px (2xl). Larger gaps on desktop (gap-5, lg:gap-6).
 - **Pagination:** Previous / Next buttons with the text "Page 2 of 5". The page lives in the URL.
 - **Empty states:** no search results → "No items match “…”. Try different keywords." No items at all → "No items have been posted yet." (students) or the same text with a "Post item" call to action (teachers and admins).
 - **Loading:** skeleton cards, the same number as a full page.
 
 ### 5.4 `/items/[id]` (detail)
+- **Layout:** single column on phones; two columns from 1024 px (large photo on the left taking ~3/5 width, details and info box on the right taking ~2/5 width).
 - Large photo, title, description, location found, date found, who posted it.
 - **Info box (all roles):** "Think this is yours? Visit the teacher in charge of lost items and describe the item." (There is no online claim in v1.)
 - **Teachers and admins** see an actions area driven by `permissions`:
@@ -175,7 +176,7 @@ The frontend maps API error codes to English messages from `src/lib/messages.js`
   - Primary: blue (`#1D4ED8` as the starting point), with a light tint for soft backgrounds.
   - Neutrals: a slate scale; white or very light slate page background, dark slate text.
   - Status: green for success, yellow for overdue, red for danger and delete, blue-gray for archive.
-- **Typography:** Geist Sans (already installed). Base size 16 px; bold page titles; helper text 14 px.
+- **Typography:** Geist Sans (already installed). Base root size 16 px on phones (<1024px); desktop scale rule in `globals.css`: root font size 17 px from 1024 px, 18 px from 1440 px (all rem-based typography, spacing, and dimensions scale proportionally); bold page titles; helper text 14 px.
 - **Shape:** medium rounded corners, subtle shadows, generous spacing. Cards with the photo as the focus.
 - **Temporary logo:** the text "Found It!" with the `PackageSearch` icon from lucide-react, plus the optional school name. A school's own logo and colors can be swapped in later through the tokens and one logo component.
 - **Base components, built once and reused:** Button, Input, Select, Textarea, FileInput with preview, Card, Badge, confirmation Dialog, Alert, Skeleton, EmptyState, Pagination, Tabs, PasswordRevealBox (shown once + copy), ItemCard, PageHeader.
@@ -185,7 +186,7 @@ The frontend maps API error codes to English messages from `src/lib/messages.js`
 - Text contrast meets WCAG AA; touch targets are at least 44×44 px.
 - Every control is keyboard operable; focus is clearly visible; dialogs trap focus and close with Esc.
 - Every field has a linked label; errors are tied to their field (`aria-describedby`); images get `alt` text from the item title.
-- Breakpoints: `sm` 640, `md` 768, `lg` 1024. Wide tables scroll inside their own container, not the whole page.
+- Breakpoints: `sm` 640, `md` 768, `lg` 1024, `2xl` 1536. Content max width 80rem (`max-w-[80rem]`). Wide tables scroll inside their own container, not the whole page.
 
 ## 11. Out of Scope for v1 (UI)
 

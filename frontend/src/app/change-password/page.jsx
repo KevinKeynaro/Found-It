@@ -70,25 +70,25 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 bg-slate-50">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 bg-slate-50">
+      <div className="w-full max-w-md lg:max-w-lg space-y-6 lg:space-y-8">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-white shadow-card mb-1">
-            <KeyRound className="w-6 h-6" aria-hidden="true" />
+          <div className="inline-flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-xl bg-primary text-white shadow-card mb-1">
+            <KeyRound className="w-6 h-6 lg:w-7 lg:h-7" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
             {isMandatory
               ? MESSAGES.auth.changePasswordMandatoryTitle
               : MESSAGES.auth.changePasswordTitle}
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm lg:text-base text-slate-500">
             {isMandatory
               ? MESSAGES.auth.changePasswordMandatorySubtitle
               : "Enter your current password and choose a new secure password."}
           </p>
         </div>
 
-        <Card className="shadow-card">
+        <Card className="shadow-card p-6 lg:p-8 rounded-xl lg:rounded-2xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
               <Alert variant="error" className="mb-4">

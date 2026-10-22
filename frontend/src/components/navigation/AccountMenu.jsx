@@ -58,21 +58,21 @@ export function AccountMenu() {
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Account menu"
-        className="flex items-center gap-2 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+        className="flex items-center gap-2 lg:gap-3 px-3 py-2 lg:px-3.5 lg:py-2.5 rounded-lg lg:rounded-xl text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
       >
-        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
-          <User className="w-4 h-4" aria-hidden="true" />
+        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+          <User className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
         </div>
         <div className="hidden sm:flex flex-col text-left">
-          <span className="text-sm font-semibold text-slate-900 leading-tight">
+          <span className="text-sm lg:text-base font-semibold text-slate-900 leading-tight">
             {user.name}
           </span>
-          <span className="text-xs text-slate-500 leading-none capitalize">
+          <span className="text-xs lg:text-sm text-slate-500 leading-none capitalize">
             {roleLabel}
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-slate-500 transition-transform ${
+          className={`w-4 h-4 lg:w-5 lg:h-5 text-slate-500 transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
           aria-hidden="true"
@@ -83,28 +83,28 @@ export function AccountMenu() {
         <div
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 mt-2 w-64 origin-top-right rounded-lg bg-white border border-slate-200 shadow-dropdown p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100"
+          className="absolute right-0 mt-2 w-64 lg:w-72 origin-top-right rounded-lg lg:rounded-xl bg-white border border-slate-200 shadow-dropdown p-1.5 lg:p-2 z-50 animate-in fade-in zoom-in-95 duration-100"
         >
-          <div className="px-3 py-2 border-b border-slate-100">
-            <p className="text-sm font-semibold text-slate-900 truncate">
+          <div className="px-3 py-2 lg:px-4 lg:py-3 border-b border-slate-100">
+            <p className="text-sm lg:text-base font-semibold text-slate-900 truncate">
               {user.name}
             </p>
-            <p className="text-xs text-slate-500 truncate">{user.email}</p>
-            <div className="mt-1.5">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+            <p className="text-xs lg:text-sm text-slate-500 truncate">{user.email}</p>
+            <div className="mt-1.5 lg:mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 lg:px-2.5 lg:py-1 rounded text-xs lg:text-sm font-medium bg-slate-100 text-slate-800">
                 {roleLabel}
               </span>
             </div>
           </div>
 
-          <div className="py-1">
+          <div className="py-1 lg:py-1.5">
             <Link
               href="/change-password"
               onClick={() => setIsOpen(false)}
               role="menuitem"
-              className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-slate-700 hover:bg-slate-100 transition-colors min-h-[44px]"
+              className="flex items-center gap-2.5 lg:gap-3 px-3 py-2 lg:px-4 lg:py-2.5 rounded-md lg:rounded-lg text-sm lg:text-base text-slate-700 hover:bg-slate-100 transition-colors min-h-[44px]"
             >
-              <Key className="w-4 h-4 text-slate-500" aria-hidden="true" />
+              <Key className="w-4 h-4 lg:w-5 lg:h-5 text-slate-500" aria-hidden="true" />
               <span>{MESSAGES.nav.changePassword}</span>
             </Link>
 
@@ -113,9 +113,9 @@ export function AccountMenu() {
               onClick={handleSignOut}
               disabled={signingOut}
               role="menuitem"
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-danger hover:bg-red-50 transition-colors disabled:opacity-50 min-h-[44px]"
+              className="w-full flex items-center gap-2.5 lg:gap-3 px-3 py-2 lg:px-4 lg:py-2.5 rounded-md lg:rounded-lg text-sm lg:text-base text-danger hover:bg-red-50 transition-colors disabled:opacity-50 min-h-[44px]"
             >
-              <LogOut className="w-4 h-4 text-danger" aria-hidden="true" />
+              <LogOut className="w-4 h-4 lg:w-5 lg:h-5 text-danger" aria-hidden="true" />
               <span>
                 {signingOut ? MESSAGES.auth.signingOut : MESSAGES.nav.signOut}
               </span>

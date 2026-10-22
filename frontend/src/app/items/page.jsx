@@ -50,6 +50,17 @@ function ItemsContent() {
   const [error, setError] = useState(null);
   const [retryKey, setRetryKey] = useState(0);
 
+  // Sync loading state during render when URL params change (prevents stuck dimmed states on redundant clicks)
+  const [prevParams, setPrevParams] = useState({ q, view, page });
+  if (
+    prevParams.q !== q ||
+    prevParams.view !== view ||
+    prevParams.page !== page
+  ) {
+    setPrevParams({ q, view, page });
+    setLoading(true);
+  }
+
   useEffect(() => {
     let ignore = false;
     const controller = new AbortController();
@@ -89,19 +100,20 @@ function ItemsContent() {
   }, [q, view, page, retryKey]);
 
   const handleSearchChange = (newQ) => {
-    setLoading(true);
-    const url = buildListUrl({ q: newQ, view, page: 1 });
+    const trimmed = (newQ || "").trim().slice(0, 100);
+    if (trimmed === q) return;
+    const url = buildListUrl({ q: trimmed, view, page: 1 });
     router.replace(url);
   };
 
   const handleTabChange = (newTab) => {
-    setLoading(true);
-    const url = buildListUrl({ q: newTab, view: newTab, page: 1 });
+    if (newTab === view && !q) return;
+    const url = buildListUrl({ q: "", view: newTab, page: 1 });
     router.push(url);
   };
 
   const handlePageChange = (newPage) => {
-    setLoading(true);
+    if (newPage === page) return;
     const url = buildListUrl({ q, view, page: newPage });
     router.push(url);
     if (typeof window !== "undefined") {
@@ -110,19 +122,15 @@ function ItemsContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       <PageHeader
         title={MESSAGES.items.title}
-        description={
-          isStaff && view !== "active"
-            ? `Viewing ${view} items`
-            : "Browse and search items reported found on campus."
-        }
+        description="Browse and search items reported found on campus."
       />
 
       {/* Controls: Search and Role-Based Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="w-full sm:max-w-md">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
+        <div className="w-full sm:max-w-md lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl">
           <SearchBar
             value={q}
             onChange={handleSearchChange}

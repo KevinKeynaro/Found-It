@@ -42,24 +42,24 @@ export default function LoginPage() {
   const displayedError = formError || authError;
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 bg-slate-50">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 lg:p-8 bg-slate-50">
+      <div className="w-full max-w-md lg:max-w-lg space-y-6 lg:space-y-8">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary text-white shadow-card mb-2">
-            <PackageSearch className="w-8 h-8" aria-hidden="true" />
+          <div className="inline-flex items-center justify-center w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-primary text-white shadow-card mb-2">
+            <PackageSearch className="w-8 h-8 lg:w-9 lg:h-9" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900">
             {MESSAGES.appName}
           </h1>
           {schoolName && (
-            <p className="text-sm font-medium text-slate-600">{schoolName}</p>
+            <p className="text-sm lg:text-base font-medium text-slate-600">{schoolName}</p>
           )}
-          <p className="text-sm text-slate-500">
+          <p className="text-sm lg:text-base text-slate-500">
             {MESSAGES.auth.signInSubtitle}
           </p>
         </div>
 
-        <Card className="shadow-card">
+        <Card className="shadow-card p-6 lg:p-8 rounded-xl lg:rounded-2xl">
           <form onSubmit={handleSubmit} className="space-y-4">
             {displayedError && (
               <Alert variant="error" className="mb-4">
