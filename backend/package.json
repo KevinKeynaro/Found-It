@@ -16,6 +16,8 @@
     "admin:deactivate": "node scripts/admin.js deactivate",
     "admin:activate": "node scripts/admin.js activate",
     "seed:dev": "node scripts/seed-dev.js",
+    "seed:items": "node scripts/seed-items-dev.js",
+    "seed:items:clean": "node scripts/seed-items-dev.js clean",
     "test": "node --test"
   },
   "dependencies": {

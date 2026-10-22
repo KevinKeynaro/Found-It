@@ -167,6 +167,12 @@ npm run admin:activate -- --email="admin@found-it.test"
 
 # Seed development teacher and student accounts (disabled in production)
 npm run seed:dev
+
+# Seed development items with solid-color PNG photos (disabled in production)
+npm run seed:items
+
+# Clean development seed items and remove images from Cloudinary
+npm run seed:items:clean
 ```
 
 *Note: Never pass passwords via command-line arguments.*
