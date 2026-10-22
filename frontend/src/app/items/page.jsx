@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, RotateCcw, PackageSearch } from "lucide-react";
+import { Search, RotateCcw, PackageSearch, PlusCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { MESSAGES } from "@/lib/messages";
 import { listItems } from "@/lib/itemsApi";
@@ -122,15 +123,15 @@ function ItemsContent() {
   };
 
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       <PageHeader
         title={MESSAGES.items.title}
         description="Browse and search items reported found on campus."
       />
 
       {/* Controls: Search and Role-Based Tabs */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-6">
-        <div className="w-full sm:max-w-md lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="w-full sm:max-w-sm md:max-w-md lg:max-w-lg">
           <SearchBar
             value={q}
             onChange={handleSearchChange}
@@ -195,6 +196,16 @@ function ItemsContent() {
                 isStaff
                   ? MESSAGES.items.emptyListDescriptionStaff
                   : MESSAGES.items.emptyListDescriptionStudent
+              }
+              action={
+                isStaff ? (
+                  <Link href="/items/new">
+                    <Button variant="primary" className="gap-2">
+                      <PlusCircle className="w-4 h-4" aria-hidden="true" />
+                      <span>{MESSAGES.items.postItem}</span>
+                    </Button>
+                  </Link>
+                ) : null
               }
             />
           )}

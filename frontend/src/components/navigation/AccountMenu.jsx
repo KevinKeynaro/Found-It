@@ -58,21 +58,21 @@ export function AccountMenu() {
         aria-expanded={isOpen}
         aria-haspopup="true"
         aria-label="Account menu"
-        className="flex items-center gap-2 lg:gap-3 px-3 py-2 lg:px-3.5 lg:py-2.5 rounded-lg lg:rounded-xl text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[44px]"
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 min-h-[40px]"
       >
-        <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
-          <User className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
+        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+          <User className="w-4 h-4" aria-hidden="true" />
         </div>
         <div className="hidden sm:flex flex-col text-left">
-          <span className="text-sm lg:text-base font-semibold text-slate-900 leading-tight">
+          <span className="text-sm font-semibold text-slate-900 leading-tight">
             {user.name}
           </span>
-          <span className="text-xs lg:text-sm text-slate-500 leading-none capitalize">
+          <span className="text-xs text-slate-500 leading-none capitalize">
             {roleLabel}
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 lg:w-5 lg:h-5 text-slate-500 transition-transform ${
+          className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
           aria-hidden="true"

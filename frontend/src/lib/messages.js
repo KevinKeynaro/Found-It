@@ -20,9 +20,23 @@ export const ERROR_MESSAGES = {
   DEFAULT: "Something went wrong. Please try again.",
 };
 
+export const DELETE_REASONS = {
+  RETURNED_WITHIN_RETENTION: "This item was recently returned and is still within the retention window.",
+  NOT_POSTED_BY_USER: "You can only delete items that you posted yourself.",
+  SELF_DELETE_WINDOW_EXPIRED: "The 24-hour self-deletion window has expired.",
+  ROLE_NOT_AUTHORIZED: "You don't have permission to delete this item.",
+  ALREADY_DELETED: "This item has already been deleted.",
+  ITEM_NOT_FOUND: "Item not found.",
+};
+
 export function getErrorMessage(code, defaultMessage = ERROR_MESSAGES.DEFAULT) {
   if (!code) return defaultMessage;
   return ERROR_MESSAGES[code] || defaultMessage;
+}
+
+export function getDeleteErrorMessage(reason) {
+  if (!reason) return ERROR_MESSAGES.DELETE_NOT_ALLOWED;
+  return DELETE_REASONS[reason] || ERROR_MESSAGES.DELETE_NOT_ALLOWED;
 }
 
 export const MESSAGES = {
@@ -69,6 +83,18 @@ export const MESSAGES = {
   },
   items: {
     title: "Items",
+    newItemTitle: "Post a found item",
+    editItemTitle: "Edit item",
+    postItem: "Post item",
+    postingItem: "Posting item…",
+    saveChanges: "Save changes",
+    savingChanges: "Saving changes…",
+    itemPostedSuccess: "Item posted",
+    itemUpdatedSuccess: "Item updated",
+    itemReturnedSuccess: "Item marked as returned",
+    itemReopenedSuccess: "Item reopened",
+    itemDeletedSuccess: "Item deleted",
+    reopenToEditHint: "Reopen this item first to edit it.",
     searchPlaceholder: "Search items by title or location…",
     claimInfoTitle: "Think this is yours?",
     claimInfoDescription:
@@ -95,6 +121,60 @@ export const MESSAGES = {
       active: "Active",
       overdue: "Overdue",
       archive: "Archive",
+    },
+    actions: {
+      edit: "Edit",
+      markReturned: "Mark as returned",
+      reopen: "Reopen",
+      delete: "Delete",
+    },
+    returnDialog: {
+      title: "Mark item as returned",
+      description: "Record that this item has been claimed and handed over to its owner.",
+      handedToLabel: "Handed over to (optional)",
+      handedToPlaceholder: "Student name or ID (max 100 characters)",
+      confirm: "Mark as returned",
+      marking: "Marking as returned…",
+    },
+    reopenDialog: {
+      title: "Reopen item?",
+      message: "This item will be moved back to active status and made visible to students again.",
+      confirm: "Reopen item",
+      reopening: "Reopening…",
+    },
+    deleteDialog: {
+      title: "Delete item?",
+      message: "Are you sure you want to delete this item? This action will remove it from the list.",
+      confirm: "Delete item",
+      deleting: "Deleting…",
+    },
+    form: {
+      photoLabel: "Item photo",
+      photoHelper: "JPEG, PNG, or WebP up to 5 MB.",
+      replacePhoto: "Replace photo",
+      changePhoto: "Change photo",
+      keepCurrentPhoto: "Keep current photo",
+      titleLabel: "Item title",
+      titlePlaceholder: "e.g., Blue Hydro Flask water bottle",
+      descLabel: "Description (optional)",
+      descPlaceholder: "Add any distinctive markings, stickers, or details…",
+      locationLabel: "Location found",
+      locationPlaceholder: "e.g., Library 2nd floor, Gym bleachers",
+      dateLabel: "Date found",
+      noChangesHint: "No changes have been made to this item.",
+    },
+    validation: {
+      titleRequired: "Title cannot be empty",
+      titleTooLong: "Title cannot exceed 150 characters",
+      descTooLong: "Description cannot exceed 2000 characters",
+      locationRequired: "Location found cannot be empty",
+      locationTooLong: "Location cannot exceed 150 characters",
+      dateRequired: "Date found is required",
+      dateInvalid: "Date found must be a valid calendar date (YYYY-MM-DD)",
+      dateFuture: "Date found cannot be in the future",
+      photoRequired: "A photo is required to post a found item",
+      photoTooLarge: "The photo must be 5 MB or smaller",
+      photoInvalidType: "The file must be a JPEG, PNG, or WebP photo",
     },
   },
   noAccess: {

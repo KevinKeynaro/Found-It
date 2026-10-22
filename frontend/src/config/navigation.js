@@ -15,7 +15,7 @@ export const NAV_ITEMS = [
     label: "Post item",
     icon: PlusCircle,
     roles: ["teacher", "admin"],
-    enabled: false, // Milestone 7
+    enabled: true,
   },
   {
     key: "users",

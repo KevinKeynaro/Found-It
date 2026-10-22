@@ -12,15 +12,15 @@ export function AppLayout({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <header className="h-16 lg:h-20 border-b border-slate-200 bg-white">
-          <div className="max-w-[80rem] mx-auto px-4 md:px-6 lg:px-8 h-full flex items-center justify-between">
-            <Skeleton className="h-8 lg:h-10 w-32 lg:w-40" />
-            <Skeleton className="h-8 lg:h-10 w-24 lg:w-32 rounded-full" />
+        <header className="h-16 border-b border-slate-200 bg-white">
+          <div className="max-w-[68rem] mx-auto px-4 sm:px-6 md:px-8 lg:px-10 h-full flex items-center justify-between">
+            <Skeleton className="h-8 w-32 rounded-lg" />
+            <Skeleton className="h-8 w-24 rounded-full" />
           </div>
         </header>
-        <main className="flex-1 max-w-[80rem] w-full mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
-          <Skeleton className="h-10 lg:h-12 w-48 lg:w-64" />
-          <Skeleton className="h-32 lg:h-40 w-full rounded-lg lg:rounded-xl" />
+        <main className="flex-1 max-w-[68rem] w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 space-y-6">
+          <Skeleton className="h-9 w-48 rounded-lg" />
+          <Skeleton className="h-28 w-full rounded-xl" />
         </main>
       </div>
     );
@@ -43,10 +43,10 @@ export function AppLayout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Suspense fallback={<div className="h-16 lg:h-20 border-b border-slate-200 bg-white" />}>
+      <Suspense fallback={<div className="h-16 border-b border-slate-200 bg-white" />}>
         <TopBar />
       </Suspense>
-      <main className="flex-1 max-w-[80rem] w-full mx-auto px-4 md:px-6 lg:px-8 py-6 lg:py-8 pb-20 lg:pb-12">
+      <main className="flex-1 max-w-[68rem] w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 pb-20 lg:pb-12">
         {children}
       </main>
       <Suspense fallback={null}>

@@ -65,31 +65,37 @@ frontend/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── change-password/    # Password change page (mandatory on first login / self-service)
-│   │   ├── items/              # Items list & detail pages
-│   │   │   ├── [id]/           # Read-only item detail page
+│   │   ├── items/              # Items list, creation, detail, and edit pages
+│   │   │   ├── [id]/           # Item detail and edit pages
+│   │   │   │   ├── edit/       # Edit item page (teachers/admins)
+│   │   │   │   └── page.jsx    # Responsive item detail page with role-driven action buttons
+│   │   │   ├── new/            # Post new found item page (teachers/admins)
 │   │   │   └── page.jsx        # Searchable, paginated items list with role tabs
 │   │   ├── login/              # Login page
 │   │   ├── globals.css         # Tailwind 4 @theme design tokens and base styles
 │   │   ├── layout.js           # Root layout mounting Geist fonts and AuthProvider
 │   │   └── page.js             # Root redirect to /items
 │   ├── components/
-│   │   ├── items/              # Items components (ItemCard, ItemGrid, ItemCardSkeleton, SearchBar, StatusBadge, ClaimInfoBox, ItemActions)
+│   │   ├── items/              # Item components (ItemCard, ItemGrid, ItemCardSkeleton, SearchBar, StatusBadge, ClaimInfoBox, ItemActions, ItemForm, PhotoField, ReturnDialog)
 │   │   ├── navigation/         # AppLayout, TopBar, BottomTabBar, AccountMenu
-│   │   ├── ui/                 # Reusable base components (Badge, Button, Input, Alert, Card, Skeleton, EmptyState, PageHeader, Pagination, Tabs, Logo)
+│   │   ├── ui/                 # Reusable base components (Badge, Button, Input, Textarea, Dialog, ConfirmDialog, Toast, Alert, Card, Skeleton, EmptyState, PageHeader, Pagination, Tabs, Logo)
 │   │   └── NoAccess.jsx        # Reusable unauthorized access fallback screen
 │   ├── config/
 │   │   └── navigation.js       # Data-driven role-based navigation item configuration
 │   ├── context/
-│   │   └── AuthContext.jsx     # Central client authentication provider and useAuth hook
+│   │   ├── AuthContext.jsx     # Central client authentication provider and useAuth hook
+│   │   └── ToastContext.jsx    # Global toast notification context and useToast hook
 │   ├── lib/
 │   │   ├── api.js              # Central API client with uniform error formatting
 │   │   ├── format.js           # Intl date formatting and timezone helpers (daysSince, formatDate)
-│   │   ├── itemsApi.js         # Dedicated items API client (listItems, getItem)
+│   │   ├── itemValidation.js   # Pure form validation, photo checks, and update FormData builder
+│   │   ├── itemsApi.js         # Dedicated items API client (listItems, getItem, createItem, updateItem, returnItem, reopenItem, deleteItem)
 │   │   ├── listParams.js       # Pure URL search parameters parsing and serialization
 │   │   └── messages.js         # Single source of truth for UI strings and error code mapping
 │   └── proxy.js                # Next.js 16 Proxy running lightweight cookie-presence checks
 ├── test/                       # Node test runner unit tests
 │   ├── format.test.js          # Unit tests for date formatting and day boundaries
+│   ├── itemValidation.test.js  # Unit tests for item fields, photos, and update form data builder
 │   └── listParams.test.js      # Unit tests for parameter sanitization and URL building
 ├── .env.example                # Example environment variable template
 ├── jsconfig.json               # Path aliases (@/* -> src/*)
@@ -136,3 +142,12 @@ The frontend follows the rules specified in `DESIGN.md` Section 3:
    - Mobile-first layout with a sticky bottom navigation tab bar on handheld screens and a horizontal header on desktop (≥ 1024px).
    - Minimum 44×44px touch targets on all interactive controls.
    - Accessible form controls with explicit labels and `aria-describedby` error wiring.
+   - Accessible dialog modals featuring focus trapping, Esc key closure, trigger focus restoration, and body scroll lock.
+
+7. **Item Lifecycle Actions and Mutations**:
+   - `createItem(formData)`: `POST /api/items` with multipart form data.
+   - `updateItem(id, formData)`: `PATCH /api/items/:id` sending only changed fields and/or replacement photo via `buildUpdateFormData`.
+   - `returnItem(id, { returned_to })`: `POST /api/items/:id/return` recording item return to claimant.
+   - `reopenItem(id)`: `POST /api/items/:id/reopen` moving returned items back to active status.
+   - `deleteItem(id)`: `DELETE /api/items/:id` with specific lifecycle reason error mappings (`DELETE_NOT_ALLOWED`, `RETENTION_WINDOW_EXPIRED`, `INVALID_STATE`).
+   - Central `ToastProvider` gives consistent, auto-dismissing success notifications across client-side page transitions.

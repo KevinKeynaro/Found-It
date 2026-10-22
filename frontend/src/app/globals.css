@@ -44,33 +44,13 @@
 }
 
 /*
- * Base root font size: 16px on phones and tablets (<1024px).
- * All rem-based sizes across the entire application derive from this root size.
+ * Base root font size: 16px.
+ * Standard scaling across devices without over-expanding on desktop displays.
  */
 html {
   font-size: 16px;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
-}
-
-/*
- * Desktop UI Root Scale:
- * These two media queries are the ONLY places that control the desktop scale.
- * All rem-based sizes, padding, margins, heights, and typography scale proportionally.
- * Tweak these font-size values to adjust the overall scale on desktop screens:
- * - 17px from 1024px up to 1439px (+6.25% scale)
- * - 18px from 1440px and wider (+12.5% scale)
- */
-@media (min-width: 1024px) {
-  html {
-    font-size: 17px;
-  }
-}
-
-@media (min-width: 1440px) {
-  html {
-    font-size: 18px;
-  }
 }
 
 html::-webkit-scrollbar,

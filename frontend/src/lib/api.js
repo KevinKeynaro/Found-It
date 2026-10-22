@@ -66,7 +66,7 @@ export async function api(endpoint, options = {}) {
 
     const rawError = payload?.error || {};
     const code = rawError.code || (response.status === 401 ? "UNAUTHENTICATED" : "UNKNOWN_ERROR");
-    const userMessage = getErrorMessage(code, rawError.message || ERROR_MESSAGES.DEFAULT);
+    const userMessage = getErrorMessage(code, ERROR_MESSAGES.DEFAULT);
 
     throw new ApiError({
       status: response.status,

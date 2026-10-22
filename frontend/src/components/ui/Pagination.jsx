@@ -17,21 +17,21 @@ export function Pagination({
     <nav
       role="navigation"
       aria-label="Pagination Navigation"
-      className={`flex items-center justify-between gap-4 py-4 lg:py-6 ${className}`}
+      className={`flex items-center justify-between gap-4 py-3 sm:py-4 ${className}`}
     >
       <Button
         variant="outline"
         size="sm"
         disabled={disabled || isFirstPage}
         onClick={() => onPageChange(currentPage - 1)}
-        className="gap-1.5 min-h-[44px] min-w-[44px] lg:px-4 lg:py-2 lg:text-base"
+        className="gap-1 min-h-[40px] px-3 py-1.5 text-xs sm:text-sm"
         aria-label="Go to previous page"
       >
-        <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
+        <ChevronLeft className="w-4 h-4" aria-hidden="true" />
         <span>Previous</span>
       </Button>
 
-      <span className="text-sm lg:text-base font-medium text-slate-700 select-none">
+      <span className="text-xs sm:text-sm font-medium text-slate-600 select-none">
         Page {currentPage} of {Math.max(1, totalPages)}
       </span>
 
@@ -40,11 +40,11 @@ export function Pagination({
         size="sm"
         disabled={disabled || isLastPage}
         onClick={() => onPageChange(currentPage + 1)}
-        className="gap-1.5 min-h-[44px] min-w-[44px] lg:px-4 lg:py-2 lg:text-base"
+        className="gap-1 min-h-[40px] px-3 py-1.5 text-xs sm:text-sm"
         aria-label="Go to next page"
       >
         <span>Next</span>
-        <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
+        <ChevronRight className="w-4 h-4" aria-hidden="true" />
       </Button>
     </nav>
   );

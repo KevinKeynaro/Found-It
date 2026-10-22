@@ -102,13 +102,19 @@
 
 ### 5.5 `/items/new` and `/items/[id]/edit`
 - Fields: photo (required when creating, optional when editing), title, description, location found, date found.
-- Default date found: today in the application timezone; it cannot be later than today.
-- **Photo:** a file picker with `accept="image/jpeg,image/png,image/webp"` that opens the camera directly on phones; a preview before submitting; the client checks the type and the 5 MB maximum before uploading. When editing, show the current photo and a **Replace photo** button.
-- The submit button shows a loading state and prevents double submits. Validation errors appear under their field.
-- On success go to the item detail page.
+- Default date found: today in the application timezone; it cannot be later than today (`max` attribute set to today).
+- **Photo:** a file picker with `accept="image/jpeg,image/png,image/webp"` that deliberately omits the `capture` attribute so mobile devices offer both camera capture and photo gallery selection. Includes live preview with object-URL memory cleanup; the client checks MIME/extension and the 5 MB maximum before uploading. When editing, show the current photo and a **Replace photo** button.
+- The submit button shows a loading state and prevents double submits. When editing, the Save changes button is disabled if no fields or photo have changed. Validation errors appear under their respective fields.
+- On success, display a success toast and redirect to the item detail page (`/items/[id]`).
 - Editing is only for items with status `found`. For an archived item show the hint: "Reopen this item first to edit it."
 
-### 5.6 `/admin/users`
+### 5.6 Dialogs and Toasts
+- **Dialog:** Accessible modal (`role="dialog"`, `aria-modal="true"`, `aria-labelledby`, `aria-describedby`), focus trap keeping keyboard focus contained, Escape key to close, focus restoration to trigger element on close, locks body scroll (`overflow: hidden`), and dismisses on overlay click only when not busy with an operation.
+- **ConfirmDialog:** Built atop Dialog with confirm and cancel buttons, danger variant for destructive actions (e.g. deletion), inline error alerts, and busy loading states.
+- **ReturnDialog:** Modal with an optional "Handed over to" input (max 100 characters) and confirm button to mark items returned.
+- **Toast:** Floating notification system mounted in the authenticated app layout, `aria-live="polite"`, 4-second auto-dismiss, survives route changes across client navigation. Used for success feedback: "Item posted", "Item updated", "Item marked as returned", "Item reopened", "Item deleted".
+
+### 5.7 `/admin/users`
 - Search (name or email), role and active-status filters, pagination.
 - Phone: a card list (name, email, role, class, status badge). Desktop: a table with a per-row action menu.
 - Buttons: **Add user**, **Import CSV**, and **Export CSV** (choice of comma or semicolon separator, with a hint that Excel in some regional settings expects semicolons). Downloads use `fetch` and a `blob`, because authentication is by cookie.
@@ -127,9 +133,11 @@
 ## 6. Key Flows
 
 - **First login:** Sign in → `/change-password` (required) → `/items`.
-- **Posting an item:** `/items/new` → fill the form and photo → item detail.
-- **Owner collects the item:** the teacher opens the detail → Mark as returned (optionally fill "Handed over to") → the item moves to the Archive tab.
-- **Marked returned by mistake:** Archive tab → detail → Reopen (teacher within the archive window, admin any time).
+- **Posting an item:** `/items/new` → fill the form and photo → toast "Item posted" → item detail `/items/[id]`.
+- **Editing an item:** `/items/[id]` → Edit → `/items/[id]/edit` → update changes → toast "Item updated" → return to `/items/[id]`.
+- **Owner collects the item:** the teacher opens the detail → Mark as returned (optionally fill "Handed over to") → toast "Item marked as returned" → item refetches in place (status updates to returned, archive box shows details, action buttons update). The item appears in the Archive tab.
+- **Marked returned by mistake:** Archive tab → detail → Reopen (teacher within the archive window, admin any time) → toast "Item reopened" → item refetches in place (status moves back to active, action buttons refresh).
+- **Deleting an item:** `/items/[id]` → Delete → confirm deletion → toast "Item deleted" → redirect to `/items`.
 - **Start of a school year:** Admin → Import CSV → Preview → Create accounts → download the credentials CSV → hand it out to users.
 
 ## 7. Statuses and Badges
@@ -176,17 +184,17 @@ The frontend maps API error codes to English messages from `src/lib/messages.js`
   - Primary: blue (`#1D4ED8` as the starting point), with a light tint for soft backgrounds.
   - Neutrals: a slate scale; white or very light slate page background, dark slate text.
   - Status: green for success, yellow for overdue, red for danger and delete, blue-gray for archive.
-- **Typography:** Geist Sans (already installed). Base root size 16 px on phones (<1024px); desktop scale rule in `globals.css`: root font size 17 px from 1024 px, 18 px from 1440 px (all rem-based typography, spacing, and dimensions scale proportionally); bold page titles; helper text 14 px.
-- **Shape:** medium rounded corners, subtle shadows, generous spacing. Cards with the photo as the focus.
+- **Typography:** Geist Sans (already installed). Base root size 16 px across all viewports; clean, standard desktop scaling without over-expanding or filling the entire desktop; bold page titles; helper text 14 px.
+- **Shape:** medium rounded corners, subtle shadows, generous margins. Cards with the photo as the focus.
 - **Temporary logo:** the text "Found It!" with the `PackageSearch` icon from lucide-react, plus the optional school name. A school's own logo and colors can be swapped in later through the tokens and one logo component.
 - **Base components, built once and reused:** Button, Input, Select, Textarea, FileInput with preview, Card, Badge, confirmation Dialog, Alert, Skeleton, EmptyState, Pagination, Tabs, PasswordRevealBox (shown once + copy), ItemCard, PageHeader.
 
 ## 10. Accessibility and Responsiveness
 
-- Text contrast meets WCAG AA; touch targets are at least 44×44 px.
+- Text contrast meets WCAG AA; touch targets are at least 44×44 px on interactive controls.
 - Every control is keyboard operable; focus is clearly visible; dialogs trap focus and close with Esc.
 - Every field has a linked label; errors are tied to their field (`aria-describedby`); images get `alt` text from the item title.
-- Breakpoints: `sm` 640, `md` 768, `lg` 1024, `2xl` 1536. Content max width 80rem (`max-w-[80rem]`). Wide tables scroll inside their own container, not the whole page.
+- Breakpoints: `sm` 640, `md` 768, `lg` 1024, `xl` 1280. Content max width 68rem (`max-w-[68rem]`) with desktop side margins (`px-4 sm:px-6 md:px-8 lg:px-10`). Wide tables scroll inside their own container, not the whole page.
 
 ## 11. Out of Scope for v1 (UI)
 

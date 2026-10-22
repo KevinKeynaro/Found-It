@@ -77,15 +77,30 @@ function ItemDetailContent({ params }) {
     };
   }, [itemId, retryKey]);
 
+  const refreshItem = async () => {
+    try {
+      const data = await getItem(itemId);
+      setItem(data.item);
+      setError(null);
+      setNotFound(false);
+    } catch (err) {
+      if (err.status === 404 || err.code === "ITEM_NOT_FOUND") {
+        setNotFound(true);
+      } else {
+        setError(err.message || MESSAGES.DEFAULT);
+      }
+    }
+  };
+
   return (
-    <div className="max-w-[80rem] mx-auto space-y-6 lg:space-y-8">
+    <div className="max-w-[68rem] mx-auto space-y-5 sm:space-y-6">
       {/* Navigation / Back link */}
       <div className="flex items-center justify-between">
         <Link
           href="/items"
-          className="inline-flex items-center gap-2 text-sm lg:text-base font-medium text-slate-600 hover:text-slate-900 min-h-[44px] px-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 min-h-[40px] px-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <ArrowLeft className="w-4 h-4 lg:w-5 lg:h-5" aria-hidden="true" />
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
           <span>{MESSAGES.items.backToItems}</span>
         </Link>
       </div>
@@ -108,22 +123,22 @@ function ItemDetailContent({ params }) {
           </div>
 
           {/* Desktop Loading Skeleton (Two Columns) */}
-          <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-10 lg:items-start">
+          <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
             <div className="lg:col-span-7">
-              <div className="aspect-[4/3] w-full bg-slate-200 rounded-2xl animate-pulse" />
+              <div className="aspect-[4/3] w-full bg-slate-200 rounded-xl animate-pulse" />
             </div>
-            <div className="lg:col-span-5 space-y-6">
-              <div className="space-y-3">
-                <Skeleton className="h-6 w-28 rounded-full" />
-                <Skeleton className="h-10 w-4/5" />
+            <div className="lg:col-span-5 space-y-5">
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-24 rounded-full" />
+                <Skeleton className="h-8 w-4/5" />
               </div>
-              <div className="space-y-3">
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
+              <div className="space-y-2.5">
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
+                <Skeleton className="h-14 w-full rounded-lg" />
               </div>
-              <Skeleton className="h-32 w-full rounded-xl" />
-              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-28 w-full rounded-lg" />
+              <Skeleton className="h-20 w-full rounded-lg" />
             </div>
           </div>
         </>
@@ -172,60 +187,64 @@ function ItemDetailContent({ params }) {
 
       {/* Item Details View */}
       {!loading && item && !notFound && (
-        <div className="lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-10 lg:items-start space-y-6 lg:space-y-0">
-          {/* Left Column: Large Photo (~3/5 width on desktop) */}
-          <div className="lg:col-span-7 lg:sticky lg:top-28">
-            <div className="relative w-full aspect-[4/3] bg-slate-100 rounded-lg lg:rounded-2xl overflow-hidden border border-slate-200 shadow-sm flex items-center justify-center">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start space-y-6 lg:space-y-0">
+          {/* Left Column: Photo (~3/5 width on desktop) */}
+          <div className="lg:col-span-7 lg:sticky lg:top-24">
+            <div className="relative w-full aspect-[4/3] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-xs flex items-center justify-center">
               {item.image_url ? (
                 <Image
                   src={item.image_url}
                   alt={item.title}
                   fill
                   priority
-                  sizes="(max-width: 1024px) 100vw, 750px"
-                  className="object-contain p-2 sm:p-4 lg:p-6"
+                  sizes="(max-width: 1024px) 100vw, 650px"
+                  className="object-contain p-2 sm:p-4"
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center text-slate-400">
-                  <PackageSearch className="w-12 h-12 lg:w-16 lg:h-16 mb-2" aria-hidden="true" />
-                  <span className="text-sm lg:text-base">No photo available</span>
+                  <PackageSearch className="w-10 h-10 mb-2" aria-hidden="true" />
+                  <span className="text-sm">No photo available</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Right Column: Information, Attributes & Info Box (~2/5 width on desktop) */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-5 space-y-5">
             {/* Header / Title / Status */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 {isStaff && <StatusBadge item={item} />}
                 {isStaff && item.is_overdue && (
-                  <span className="text-xs lg:text-sm font-medium text-amber-800 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 lg:w-4 lg:h-4" aria-hidden="true" />
+                  <span className="text-xs font-medium text-amber-800 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{formatDaysAgo(daysSince(item.date_found))}</span>
                   </span>
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 break-words leading-tight">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 break-words leading-tight">
                 {item.title}
               </h1>
             </div>
 
-            {/* Actions placeholder (Milestone 7) */}
-            <ItemActions item={item} />
+            {/* Actions (Milestone 7) */}
+            <ItemActions
+              item={item}
+              onRefresh={refreshItem}
+              onNotFound={() => setNotFound(true)}
+            />
 
             {/* Returned Details Box (Staff only) */}
             {isStaff && item.status === "returned" && (
-              <Card className="bg-slate-50 border-slate-300 space-y-3 p-4 lg:p-5 rounded-lg lg:rounded-xl">
-                <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm lg:text-base">
-                  <CheckCircle2 className="w-4 h-4 lg:w-5 lg:h-5 text-slate-600" aria-hidden="true" />
+              <Card className="bg-slate-50 border-slate-200 space-y-2.5 p-3.5 sm:p-4 rounded-lg">
+                <div className="flex items-center gap-2 text-slate-900 font-semibold text-xs sm:text-sm">
+                  <CheckCircle2 className="w-4 h-4 text-slate-600" aria-hidden="true" />
                   <span>{MESSAGES.items.returnedDetails}</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 text-sm lg:text-base text-slate-700">
+                <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 text-xs sm:text-sm text-slate-700">
                   <div>
-                    <span className="text-xs lg:text-sm text-slate-500 block">
+                    <span className="text-xs text-slate-500 block">
                       {MESSAGES.items.returnedAt}
                     </span>
                     <span className="font-medium">
@@ -233,7 +252,7 @@ function ItemDetailContent({ params }) {
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs lg:text-sm text-slate-500 block">
+                    <span className="text-xs text-slate-500 block">
                       {MESSAGES.items.returnedBy}
                     </span>
                     <span className="font-medium">
@@ -241,7 +260,7 @@ function ItemDetailContent({ params }) {
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs lg:text-sm text-slate-500 block">
+                    <span className="text-xs text-slate-500 block">
                       {MESSAGES.items.returnedTo}
                     </span>
                     <span className="font-medium">
@@ -253,38 +272,38 @@ function ItemDetailContent({ params }) {
             )}
 
             {/* Item Attributes */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3 sm:gap-4 lg:gap-3">
-              <Card className="flex items-center gap-3.5 p-3.5 lg:p-4 rounded-lg lg:rounded-xl">
-                <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                  <MapPin className="w-5 h-5 lg:w-5.5 lg:h-5.5" aria-hidden="true" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5 sm:gap-3">
+              <Card className="flex items-center gap-3 p-3 rounded-lg border-slate-200">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                  <MapPin className="w-4.5 h-4.5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs lg:text-sm text-slate-500">{MESSAGES.items.locationFound}</p>
-                  <p className="text-sm lg:text-base font-semibold text-slate-900 truncate">
+                  <p className="text-xs text-slate-500">{MESSAGES.items.locationFound}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {item.location_found}
                   </p>
                 </div>
               </Card>
 
-              <Card className="flex items-center gap-3.5 p-3.5 lg:p-4 rounded-lg lg:rounded-xl">
-                <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                  <Calendar className="w-5 h-5 lg:w-5.5 lg:h-5.5" aria-hidden="true" />
+              <Card className="flex items-center gap-3 p-3 rounded-lg border-slate-200">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                  <Calendar className="w-4.5 h-4.5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs lg:text-sm text-slate-500">{MESSAGES.items.dateFound}</p>
-                  <p className="text-sm lg:text-base font-semibold text-slate-900">
+                  <p className="text-xs text-slate-500">{MESSAGES.items.dateFound}</p>
+                  <p className="text-sm font-semibold text-slate-900">
                     {formatDate(item.date_found)}
                   </p>
                 </div>
               </Card>
 
-              <Card className="flex items-center gap-3.5 p-3.5 lg:p-4 rounded-lg lg:rounded-xl">
-                <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-                  <User className="w-5 h-5 lg:w-5.5 lg:h-5.5" aria-hidden="true" />
+              <Card className="flex items-center gap-3 p-3 rounded-lg border-slate-200">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                  <User className="w-4.5 h-4.5" aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs lg:text-sm text-slate-500">{MESSAGES.items.postedBy}</p>
-                  <p className="text-sm lg:text-base font-semibold text-slate-900 truncate">
+                  <p className="text-xs text-slate-500">{MESSAGES.items.postedBy}</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {item.posted_by?.name || "Staff"}
                   </p>
                 </div>
@@ -292,14 +311,14 @@ function ItemDetailContent({ params }) {
             </div>
 
             {/* Description (plain text preserving line breaks) */}
-            <Card className="space-y-2 p-4 lg:p-5 rounded-lg lg:rounded-xl">
-              <h3 className="text-sm lg:text-base font-semibold text-slate-900">Description</h3>
+            <Card className="space-y-1.5 p-3.5 sm:p-4 rounded-lg border-slate-200">
+              <h3 className="text-xs sm:text-sm font-semibold text-slate-900">Description</h3>
               {item.description ? (
-                <p className="text-sm sm:text-base lg:text-lg text-slate-700 whitespace-pre-wrap leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">
                   {item.description}
                 </p>
               ) : (
-                <p className="text-sm lg:text-base text-slate-400 italic">
+                <p className="text-xs sm:text-sm text-slate-400 italic">
                   No description provided.
                 </p>
               )}
@@ -319,7 +338,7 @@ export default function ItemDetailPage({ params }) {
     <AppLayout>
       <Suspense
         fallback={
-          <div className="max-w-[80rem] mx-auto space-y-6 lg:space-y-8">
+          <div className="max-w-[68rem] mx-auto space-y-5 sm:space-y-6">
             <div className="h-6 w-24 bg-slate-200 rounded animate-pulse" />
             <div className="space-y-6 lg:hidden">
               <div className="aspect-[4/3] sm:aspect-[16/9] w-full bg-slate-200 rounded-lg animate-pulse" />
@@ -330,16 +349,16 @@ export default function ItemDetailPage({ params }) {
                 <Skeleton className="h-16 rounded-lg" />
               </div>
             </div>
-            <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8 xl:gap-10 lg:items-start">
+            <div className="hidden lg:grid lg:grid-cols-12 lg:gap-8 lg:items-start">
               <div className="lg:col-span-7">
-                <div className="aspect-[4/3] w-full bg-slate-200 rounded-2xl animate-pulse" />
+                <div className="aspect-[4/3] w-full bg-slate-200 rounded-xl animate-pulse" />
               </div>
-              <div className="lg:col-span-5 space-y-6">
-                <Skeleton className="h-10 w-4/5" />
-                <div className="space-y-3">
-                  <Skeleton className="h-16 w-full rounded-xl" />
-                  <Skeleton className="h-16 w-full rounded-xl" />
-                  <Skeleton className="h-16 w-full rounded-xl" />
+              <div className="lg:col-span-5 space-y-5">
+                <Skeleton className="h-8 w-4/5" />
+                <div className="space-y-2.5">
+                  <Skeleton className="h-14 w-full rounded-lg" />
+                  <Skeleton className="h-14 w-full rounded-lg" />
+                  <Skeleton className="h-14 w-full rounded-lg" />
                 </div>
               </div>
             </div>
