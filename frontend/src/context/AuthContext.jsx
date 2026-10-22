@@ -1,11 +1,38 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  Suspense,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { ERROR_MESSAGES } from "@/lib/messages";
 
 const AuthContext = createContext(null);
+
+function AuthRouteWatcher() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.must_change_password) {
+        if (pathname !== "/change-password") {
+          router.push("/change-password");
+        }
+      } else if (pathname === "/login") {
+        router.push("/items");
+      }
+    }
+  }, [user, loading, pathname, router]);
+
+  return null;
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -13,9 +40,6 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState(null);
 
   const router = useRouter();
-  const pathname = usePathname();
-
-  const isPublicRoute = pathname === "/login";
 
   useEffect(() => {
     let ignore = false;
@@ -30,18 +54,20 @@ export function AuthProvider({ children }) {
       } catch (err) {
         if (!ignore) {
           setUser(null);
+          const currentPath =
+            typeof window !== "undefined" ? window.location.pathname : "";
           if (err instanceof ApiError) {
             if (err.code === "ACCOUNT_DISABLED" || err.status === 403) {
               setAuthError(ERROR_MESSAGES.ACCOUNT_DISABLED);
-              if (!isPublicRoute) {
+              if (currentPath !== "/login") {
                 router.push("/login");
               }
             } else if (err.code === "PASSWORD_CHANGE_REQUIRED") {
-              if (pathname !== "/change-password") {
+              if (currentPath !== "/change-password") {
                 router.push("/change-password");
               }
             } else if (err.code === "UNAUTHENTICATED" || err.status === 401) {
-              if (!isPublicRoute) {
+              if (currentPath !== "/login") {
                 router.push("/login");
               }
             }
@@ -59,20 +85,7 @@ export function AuthProvider({ children }) {
     return () => {
       ignore = true;
     };
-  }, [pathname, isPublicRoute, router]);
-
-  // Handle mandatory password change enforcement
-  useEffect(() => {
-    if (!loading && user) {
-      if (user.must_change_password) {
-        if (pathname !== "/change-password") {
-          router.push("/change-password");
-        }
-      } else if (isPublicRoute) {
-        router.push("/items");
-      }
-    }
-  }, [user, loading, pathname, isPublicRoute, router]);
+  }, [router]);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -144,7 +157,14 @@ export function AuthProvider({ children }) {
     refreshUser,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <AuthRouteWatcher />
+      </Suspense>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
