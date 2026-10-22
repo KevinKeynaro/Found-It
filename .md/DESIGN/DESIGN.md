@@ -19,7 +19,7 @@
 - **Everything is in English:** UI text, documentation, identifiers, and code comments (comments only where they add value).
 - **All UI strings live in one place** (`src/lib/messages.js`), including the error-code messages in section 8. Components import strings from there. No i18n library in v1, but adding another language later must not require touching components.
 - **Role labels:** `admin` → Admin, `teacher` → Teacher, `student` → Student.
-- **Dates** use `Intl` with locale `en` and the application timezone, for example "Oct 20, 2026". Overdue items also show how long, for example "Overdue 5 days".
+- **Dates** use `Intl` with locale `en` and the application timezone, for example "Oct 20, 2026". Overdue items show an "Overdue" badge plus "Found N days ago" text (the frontend does not know the backend overdue threshold).
 - **Timezone:** the frontend reads `NEXT_PUBLIC_APP_TIMEZONE`, which must equal the backend `APP_TIMEZONE`. It is used for the default and the maximum of the "date found" field and for computing "days overdue".
 - **Optional school name:** `NEXT_PUBLIC_SCHOOL_NAME`. When set, it is shown under the logo in the header and on the login page.
 
@@ -136,10 +136,12 @@
 | Display | Condition | Who sees it |
 |---|---|---|
 | No badge | Active item | Everyone |
-| **Overdue** (yellow, with days) | `is_overdue` is true | Teachers, admins |
+| **Overdue** (yellow badge), plus "Found N days ago" text | `is_overdue` is true | Teachers, admins |
 | **Returned** (blue-gray) | `status` is returned | Teachers, admins |
 
 Students only ever receive active items from the API, so they never see a badge.
+
+> **Note on Overdue Display:** The frontend does not know or compute the backend overdue threshold. The backend determines and sets `is_overdue`. For overdue items, the frontend displays the yellow "Overdue" badge along with the elapsed time calculated as "Found N days ago" (using `daysSince(date_found)` against the application timezone).
 
 ## 8. Error Messages
 

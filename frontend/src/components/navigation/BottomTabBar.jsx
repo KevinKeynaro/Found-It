@@ -22,7 +22,9 @@ export function BottomTabBar() {
         const Icon = item.icon;
         const isActive =
           pathname === item.href ||
-          (item.href !== "/items" && pathname.startsWith(item.href));
+          (item.key === "items"
+            ? pathname.startsWith("/items/") && !pathname.startsWith("/items/new")
+            : pathname.startsWith(`${item.href}/`));
 
         return (
           <Link

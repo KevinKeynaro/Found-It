@@ -69,8 +69,33 @@ export const MESSAGES = {
   },
   items: {
     title: "Items",
-    placeholderTitle: "Item list coming soon",
-    placeholderDescription: "The items browsing and claim management system will be available in the next milestone.",
+    searchPlaceholder: "Search items by title or location…",
+    claimInfoTitle: "Think this is yours?",
+    claimInfoDescription:
+      "Visit the teacher in charge of lost items and describe the item.",
+    emptySearchTitle: "No matching items",
+    emptySearchDescription: (query) =>
+      `No items match “${query}”. Try different keywords.`,
+    emptyListTitle: "No items yet",
+    emptyListDescriptionStudent: "No items have been posted yet.",
+    emptyListDescriptionStaff: "No items have been posted yet.",
+    notFoundTitle: "Item not found",
+    notFoundDescription:
+      "The item you are looking for does not exist, was removed, or you do not have permission to view it.",
+    backToItems: "Back to items",
+    locationFound: "Location found",
+    dateFound: "Date found",
+    postedBy: "Posted by",
+    returnedDetails: "Return details",
+    returnedAt: "Returned on",
+    returnedBy: "Marked returned by",
+    returnedTo: "Handed over to",
+    retry: "Retry",
+    tabs: {
+      active: "Active",
+      overdue: "Overdue",
+      archive: "Archive",
+    },
   },
   noAccess: {
     title: "You don't have access to this page",

@@ -36,17 +36,18 @@ export function formatDate(dateInput, options = {}) {
   }
 }
 
-export function daysOverdue(dateFound, overdueThresholdDays = 30) {
-  if (!dateFound) return 0;
+export function daysSince(dateInput) {
+  if (!dateInput) return 0;
 
   try {
     const todayStr = todayInTimezone();
     let foundStr;
 
-    if (typeof dateFound === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateFound)) {
-      foundStr = dateFound.slice(0, 10);
+    if (typeof dateInput === "string" && /^\d{4}-\d{2}-\d{2}/.test(dateInput)) {
+      foundStr = dateInput.slice(0, 10);
     } else {
-      const d = dateFound instanceof Date ? dateFound : new Date(dateFound);
+      const d = dateInput instanceof Date ? dateInput : new Date(dateInput);
+      if (Number.isNaN(d.getTime())) return 0;
       foundStr = new Intl.DateTimeFormat("en-CA", {
         timeZone: getAppTimezone(),
         year: "numeric",
@@ -59,10 +60,19 @@ export function daysOverdue(dateFound, overdueThresholdDays = 30) {
     const foundDate = new Date(`${foundStr}T00:00:00Z`);
     const diffDays = Math.floor((todayDate.getTime() - foundDate.getTime()) / 86400000);
 
-    return Math.max(0, diffDays - overdueThresholdDays);
+    return Math.max(0, Number.isNaN(diffDays) ? 0 : diffDays);
   } catch {
     return 0;
   }
+}
+
+export function daysOverdue(dateFound, overdueThresholdDays = 30) {
+  const elapsed = daysSince(dateFound);
+  return Math.max(0, elapsed - overdueThresholdDays);
+}
+
+export function formatDaysAgo(days) {
+  return `Found ${days} ${days === 1 ? "day" : "days"} ago`;
 }
 
 export function formatOverdueLabel(days) {

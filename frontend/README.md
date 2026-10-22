@@ -42,6 +42,9 @@ cp .env.example .env.local
 # Run local development server with Turbopack (http://localhost:3000)
 npm run dev
 
+# Run unit tests
+npm test
+
 # Run ESLint code checks
 npm run lint
 
@@ -62,14 +65,17 @@ frontend/
 ├── src/
 │   ├── app/                    # Next.js App Router
 │   │   ├── change-password/    # Password change page (mandatory on first login / self-service)
-│   │   ├── items/              # Items page (authenticated home)
+│   │   ├── items/              # Items list & detail pages
+│   │   │   ├── [id]/           # Read-only item detail page
+│   │   │   └── page.jsx        # Searchable, paginated items list with role tabs
 │   │   ├── login/              # Login page
 │   │   ├── globals.css         # Tailwind 4 @theme design tokens and base styles
 │   │   ├── layout.js           # Root layout mounting Geist fonts and AuthProvider
 │   │   └── page.js             # Root redirect to /items
 │   ├── components/
+│   │   ├── items/              # Items components (ItemCard, ItemGrid, ItemCardSkeleton, SearchBar, StatusBadge, ClaimInfoBox, ItemActions)
 │   │   ├── navigation/         # AppLayout, TopBar, BottomTabBar, AccountMenu
-│   │   ├── ui/                 # Reusable base components (Button, Input, Alert, Card, Skeleton, EmptyState, PageHeader, Logo)
+│   │   ├── ui/                 # Reusable base components (Badge, Button, Input, Alert, Card, Skeleton, EmptyState, PageHeader, Pagination, Tabs, Logo)
 │   │   └── NoAccess.jsx        # Reusable unauthorized access fallback screen
 │   ├── config/
 │   │   └── navigation.js       # Data-driven role-based navigation item configuration
@@ -77,9 +83,14 @@ frontend/
 │   │   └── AuthContext.jsx     # Central client authentication provider and useAuth hook
 │   ├── lib/
 │   │   ├── api.js              # Central API client with uniform error formatting
-│   │   ├── format.js           # Intl date formatting and timezone helpers
+│   │   ├── format.js           # Intl date formatting and timezone helpers (daysSince, formatDate)
+│   │   ├── itemsApi.js         # Dedicated items API client (listItems, getItem)
+│   │   ├── listParams.js       # Pure URL search parameters parsing and serialization
 │   │   └── messages.js         # Single source of truth for UI strings and error code mapping
 │   └── proxy.js                # Next.js 16 Proxy running lightweight cookie-presence checks
+├── test/                       # Node test runner unit tests
+│   ├── format.test.js          # Unit tests for date formatting and day boundaries
+│   └── listParams.test.js      # Unit tests for parameter sanitization and URL building
 ├── .env.example                # Example environment variable template
 ├── jsconfig.json               # Path aliases (@/* -> src/*)
 ├── next.config.mjs             # Next.js config (Cloudinary remotePatterns, Cache Components)
