@@ -1,0 +1,88 @@
+export const ERROR_MESSAGES = {
+  INVALID_CREDENTIALS: "Incorrect email or password.",
+  ACCOUNT_DISABLED: "Your account has been deactivated. Contact your school administrator.",
+  TOO_MANY_ATTEMPTS: "Too many attempts. Please try again in a few minutes.",
+  UNAUTHENTICATED: "Your session has ended. Please sign in again.",
+  PASSWORD_CHANGE_REQUIRED: "You must change your password first.",
+  FORBIDDEN: "You don't have permission to do this.",
+  VALIDATION_ERROR: "Please check the entered information.",
+  ITEM_NOT_FOUND: "Item not found.",
+  INVALID_STATE: "This item has changed. Reload the page.",
+  RETENTION_WINDOW_EXPIRED: "The archive window has passed. Only an admin can reopen this item.",
+  DELETE_NOT_ALLOWED: "This item can't be deleted yet.",
+  FILE_TOO_LARGE: "The photo must be 5 MB or smaller.",
+  INVALID_FILE: "The file must be a JPEG, PNG, or WebP photo (or a CSV file on the import page).",
+  EMAIL_ALREADY_EXISTS: "This email is already registered.",
+  ADMIN_MANAGED_VIA_CLI: "Admin accounts are managed on the server and can't be changed here.",
+  IMPORT_CONFLICT: "An email conflicted during the import. No accounts were created. Please try again.",
+  CSRF_REJECTED: "The request was rejected. Reload the page and try again.",
+  NETWORK_ERROR: "Can't reach the server. Check your connection.",
+  DEFAULT: "Something went wrong. Please try again.",
+};
+
+export function getErrorMessage(code, defaultMessage = ERROR_MESSAGES.DEFAULT) {
+  if (!code) return defaultMessage;
+  return ERROR_MESSAGES[code] || defaultMessage;
+}
+
+export const MESSAGES = {
+  appName: "Found It!",
+  appDescription: "School lost and found system",
+  roles: {
+    admin: "Admin",
+    teacher: "Teacher",
+    student: "Student",
+  },
+  auth: {
+    signInTitle: "Sign in to your account",
+    signInSubtitle: "Enter your school email and password to access Found It!",
+    emailLabel: "Email",
+    emailPlaceholder: "name@school.test",
+    passwordLabel: "Password",
+    passwordPlaceholder: "••••••••",
+    signInButton: "Sign in",
+    signingIn: "Signing in…",
+    forgotPasswordText: "Forgot your password? Contact your school administrator.",
+    changePasswordTitle: "Change password",
+    changePasswordMandatoryTitle: "Password change required",
+    changePasswordMandatorySubtitle: "You must change your initial password before accessing your account.",
+    currentPasswordLabel: "Current password",
+    newPasswordLabel: "New password",
+    confirmNewPasswordLabel: "Confirm new password",
+    passwordRules: "At least 8 characters and different from the current password.",
+    passwordsDoNotMatch: "New passwords do not match.",
+    newPasswordSameAsCurrent: "New password must be different from the current password.",
+    passwordTooShort: "Password must be at least 8 characters.",
+    updatePasswordButton: "Update password",
+    updatingPassword: "Updating password…",
+    passwordUpdatedSuccess: "Password changed successfully.",
+    signOutButton: "Sign out",
+    signingOut: "Signing out…",
+  },
+  nav: {
+    items: "Items",
+    postItem: "Post item",
+    users: "Users",
+    account: "Account",
+    changePassword: "Change password",
+    signOut: "Sign out",
+  },
+  items: {
+    title: "Items",
+    placeholderTitle: "Item list coming soon",
+    placeholderDescription: "The items browsing and claim management system will be available in the next milestone.",
+  },
+  noAccess: {
+    title: "You don't have access to this page",
+    description: "Your current account role does not have permission to view this section.",
+    backToItems: "Return to items",
+  },
+  common: {
+    loading: "Loading…",
+    submitting: "Submitting…",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    back: "Back",
+    empty: "No data available",
+  },
+};
